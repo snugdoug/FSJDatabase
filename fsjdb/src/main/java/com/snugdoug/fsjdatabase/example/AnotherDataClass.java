@@ -4,7 +4,7 @@ import com.snugdoug.fsjdatabase.database.DataSource;
 import com.snugdoug.fsjdatabase.database.createStructure.Column;
 import com.snugdoug.fsjdatabase.database.createStructure.Table;
 
-@DataSource(rootPath = "jdb_data") // Same root path, another table
+@DataSource(rootPath = "fsjdb_data") // Same root path, another table
 @Table(name = "products")
 class AnotherDataClass {
     @Column(name = "product_id", primaryKey = true)
