@@ -7,11 +7,12 @@ import java.util.Map;
 import java.util.Scanner;
 
 import com.snugdoug.fsjdatabase.database.FSJDatabase;
+import com.snugdoug.fsjdatabase.database.createStructure.DBRecord;
 import com.snugdoug.fsjdatabase.database.query.Query;
 
 public class Main {
 
-public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         FSJDatabase.start(MyDataClass.class, AnotherDataClass.class);
 
         Map<String, Object> userData = new HashMap<>();
@@ -25,6 +26,17 @@ public static void main(String[] args) throws IOException {
         productData.put("product_name", "Laptop");
         FSJDatabase.insert(AnotherDataClass.class, productData);
 
+        DBRecord record = new DBRecord()
+                .set("id", 1)
+                .set("name", "Alice")
+                .set("age", 30);
+
+        Map<String, Object> rowData = record.getFields();
+        
+            FSJDatabase.insert(MyDataClass.class, rowData);
+        
+        System.out.println(rowData); // {id=1, name=Alice, age=30}
+
         Scanner scanner = new Scanner(System.in);
 
         while (true) {  // Loop for multiple queries
@@ -35,34 +47,14 @@ public static void main(String[] args) throws IOException {
                 break; // Exit the loop if the user types 'exit'
             }
 
-            try {
-                Class<?> tableClass = null;
-                String tableName = "";
+                Query query = new Query(MyDataClass.class)
+                        .select("id", "name")
+                        .where("age > 25")
+                        .orderBy("name", false);
 
-                if (queryString.contains("WHERE")) {
-                    tableName = queryString.substring(0, queryString.indexOf("WHERE")).trim();
-                } else {
-                    tableName = queryString.trim();
-                }
+                List<Map<String, Object>> results = query.execute();
+                System.out.println(results);
 
-
-                if (tableName.equals("MyDataClass")) {
-                    tableClass = MyDataClass.class;
-                } else if (tableName.equals("AnotherDataClass")) {
-                    tableClass = AnotherDataClass.class;
-                } else {
-                    System.out.println("Invalid Table Name");
-                    continue; // Go to the next iteration of the loop
-                }
-
-                List<Map<String, Object>> queryResults = Query.query(tableClass, queryString);
-                System.out.println("Query Results: " + queryResults);
-            } catch (IllegalArgumentException e) {
-                System.out.println("Error: " + e.getMessage());
-            } catch (Exception e) {
-                System.out.println("An unexpected error occurred: " + e.getMessage());
-                e.printStackTrace(); // Print the full stack trace for debugging
-            }
         }
 
         scanner.close(); // Close the scanner to prevent resource leaks.

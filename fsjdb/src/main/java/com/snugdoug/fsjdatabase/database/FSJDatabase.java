@@ -30,11 +30,24 @@ import com.snugdoug.fsjdatabase.database.query.Indexing;
 public class FSJDatabase {
 
     public static final Map<Class<?>, TableMetadata> metadataCache = new HashMap<>();
+    private final Map<String, Map<String, Object>> storage = new HashMap<>();
 
-    public static void start(Class<?>... annotatedClasses) throws IOException {
-        for (Class<?> cls : annotatedClasses) {
-            processClass(cls);
+    public static void start(Class<?>... annotatedClasses) {
+        try {
+
+            for (Class<?> cls : annotatedClasses) {
+                processClass(cls);
+            }
+        } catch (IOException e) {
         }
+    }
+
+    public Map<String, Object> findById(String id) {
+        return storage.get(id);
+    }
+
+    public List<Map<String, Object>> findAll() {
+        return new ArrayList<>(storage.values());
     }
 
     private static void processClass(Class<?> cls) throws IOException {
@@ -128,8 +141,8 @@ public class FSJDatabase {
         return false; // Default to false if where clause is not in simple "key=value" form
     }
 
-    public static void insert(Class<?> cls, Map<String, Object> data) throws IOException {
-        TableMetadata metadata = metadataCache.get(cls); // Now it should work!
+    public static void insert(Class<?> cls, Map<String, Object> data) {
+        TableMetadata metadata = metadataCache.get(cls);
         if (metadata == null) {
             throw new IllegalArgumentException("Class " + cls.getName() + " is not registered as a table.");
         }
@@ -144,6 +157,7 @@ public class FSJDatabase {
                 writer.write(entry.getKey() + ":" + entry.getValue());
                 writer.newLine();
             }
+        } catch (IOException ex) {
         }
     }
 
