@@ -3,9 +3,9 @@
 # Wiki:
 
 ## <summary>Sections</summary>
-1. What does FSJDatabase stand for? https://github.com/snugdoug/jdb/master/README.md#1-what-does-fsjdatabase-stand-for
-2. How do I use this library? https://github.com/snugdoug/jdb/edit/master/README.md#2-how-do-i-use-this-library
-3. Notes. https://github.com/snugdoug/jdb/master/README.md#notes
+1. What does FSJDatabase stand for?
+2. How do I use this library?
+3. Notes.
 
 ## <summary>1. What does FSJDatabase stand for?</summary>
 FSJDatabase stands for:
