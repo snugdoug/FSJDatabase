@@ -1,0 +1,10 @@
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/JDatabase.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/query/Indexing.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/createStructure/TableMetadata.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/example/MyDataClass.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/createStructure/Column.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/example/Main.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/example/AnotherDataClass.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/createStructure/Table.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/query/Query.java
+/home/bdp/Oxcore/javaUtils/blake/jdb/jdb/src/main/java/com/snugdoug/fsjdb/database/DataSource.java
