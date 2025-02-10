@@ -18,12 +18,11 @@ mvn install:install-file -Dfile=<path> -DgroupId=<com.snugdoug.fsjdatabase> -Dar
 Note: you will need to run it for every new version of FSJDB
 
 then you will put this in your pom.xml:
-
-<dependency>
-    <groupId>com.snugdoug.fsjdatabase</groupId>
-    <artifactId>fsjdatabase-library</artifactId>
-    <version>VERSION</version>
-</dependency>
+ <dependency>
+     <groupId>com.snugdoug.fsjdatabase</groupId>
+     <artifactId>fsjdatabase-library</artifactId>
+     <version>VERSION</version>
+ </dependency>
 
 also in com.snugdoug.example there is a code example of how to use the library also that is the code I use to the program so it should work.
 
