@@ -1,0 +1,4 @@
+name:Alice
+id:2
+age:30
+email:alice@fsjdatabase.com

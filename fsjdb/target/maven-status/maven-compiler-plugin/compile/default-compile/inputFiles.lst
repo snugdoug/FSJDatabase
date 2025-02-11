@@ -1,3 +1,4 @@
+/home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/schemas/Schema.java
 /home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/query/QueryBuilder.java
 /home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/createStructure/Column.java
 /home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/example/MyDataClass.java
@@ -10,4 +11,3 @@
 /home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/createStructure/TableMetadata.java
 /home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/DataSource.java
 /home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/createStructure/DBRecord.java
-/home/bdp/Oxcore/javaUtils/blake/jdb/fsjdb/src/main/java/com/snugdoug/fsjdatabase/database/schema/Schema.java

@@ -9,5 +9,5 @@ com/snugdoug/fsjdatabase/database/FSJDatabase.class
 com/snugdoug/fsjdatabase/database/query/Query.class
 com/snugdoug/fsjdatabase/database/query/Indexing.class
 com/snugdoug/fsjdatabase/database/DataSource.class
-com/snugdoug/fsjdatabase/database/schema/Schema.class
+com/snugdoug/fsjdatabase/database/schemas/Schema.class
 com/snugdoug/fsjdatabase/database/createStructure/DBRecord.class

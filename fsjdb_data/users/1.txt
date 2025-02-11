@@ -1,3 +1,4 @@
-name:Alice
-age:30
+name:John Doe
 id:1
+age:30
+email:johndoe@fsjdatabase

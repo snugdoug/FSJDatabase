@@ -1,4 +1,4 @@
-package com.snugdoug.fsjdatabase.database.schema;
+package com.snugdoug.fsjdatabase.database.schemas;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
