@@ -4,9 +4,29 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.snugdoug.mvn.archetype</groupId>
+    <groupId>com.snugdoug.fsjdatabase</groupId>
     <artifactId>FSJDatabase</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.1.0_RELEASE</version>
+
+    <dependencies>
+        <dependency>
+        <groupId>org.reflections</groupId>
+        <artifactId>reflections</artifactId>
+        <version>0.10</version>
+    </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-reload4j</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>2.0.17</version>
+        </dependency>
+    </dependencies>
+
+
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
