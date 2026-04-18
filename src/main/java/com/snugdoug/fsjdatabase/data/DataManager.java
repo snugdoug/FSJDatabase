@@ -76,7 +76,7 @@ public class DataManager {
         if(!FSJDatabaseInitializer.tables.contains(table) && !FSJDatabaseInitializer.freeTables.contains(table))
             throw new TableNotFoundException(table);
 
-        if(autoIncrement.contains(table) && dataToAdd.containsKey("id"))
+        if(autoIncrement.contains(table) && dataToAdd.containsKey(getTableIdName(table)))
             throw new RuntimeException("Id field cannot be in data to add when using auto incrementing");
 
         Set<String> tableColumns = getTableColumns(table, autoIncrement.contains(table));
@@ -327,9 +327,14 @@ public class DataManager {
 
         String tableName = table.getSimpleName();
         String targetFileLocation =  FSJDatabaseStructure.tablesDir + "/" + tableName + "/" + id + ".txt";
+        Path targetFilePath = Path.of(targetFileLocation);
+
+        if(!targetFilePath.toFile().exists()) {
+            throw new RuntimeException("The target file does not exist!");
+        }
 
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(Path.of(targetFileLocation).toFile()));
+            BufferedWriter writer = new BufferedWriter(new FileWriter(targetFilePath.toFile()));
 
             data.forEach((key, value) -> {
                 try {
@@ -504,7 +509,7 @@ public class DataManager {
 
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(targetFileLocation));
 
-            dataToAdd.put("id", id);
+            dataToAdd.put(getTableIdName(table), id);
 
             dataToAdd.forEach((key, value) -> {
                 try {
@@ -525,7 +530,7 @@ public class DataManager {
         else {
             int id;
             try {
-                id = Integer.parseInt(dataToAdd.get("id").toString());
+                id = Integer.parseInt(dataToAdd.get(getTableIdName(table)).toString());
             } catch (NullPointerException e) {
                 throw new NullPointerException("Could not find the property id in dataToAdd or failed to parse int of id\n" + e);
             }

@@ -77,12 +77,12 @@ public class ExampleClass {
         noAutoIncrementData.put("id", "1");
 
         // Deleting data
-//        data.deleteById(TableNumberOne.class, 5);
+        data.deleteById(TableNumberOne.class, 5);
         data.deleteByFromIdToId(TableNumberOne.class, 10, 11);
         data.deleteContaining(TableNumberOne.class, "firstName", "AliceE");
 
         // Updating Data
-//        data.updateValueById(TableNumberOne.class, 28, "firstName", "Jonny");
+        data.updateValueById(TableNumberOne.class, 28, "firstName", "Jonny");
         data.updateValueContaining(TableNumberOne.class, "firstName", "AliceEE", "John");
 
         LinkedHashMap<String, String> updatingOneData = new LinkedHashMap<>();
@@ -106,7 +106,7 @@ public class ExampleClass {
         data.updateContaining(TableNumberOne.class, updatingTwoSearchTerm, updatingTwoData);
 
         // finding data
-//        System.out.println(data.findById(TableNumberOne.class, 28));
+        System.out.println(data.findById(TableNumberOne.class, 28));
         System.out.println(data.findByValueContaining(TableNumberOne.class, "firstName", "Jimmy"));
 
 
