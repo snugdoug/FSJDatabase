@@ -23,10 +23,11 @@
 package com.snugdoug.fsjdatabase.examples;
 
 import com.snugdoug.fsjdatabase.annotation.Column;
+import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 
-@Table(name = "TableNumberOne")
+@Table
 public class TableNumberOne {
 
     @Column(name = "firstName")

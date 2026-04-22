@@ -27,7 +27,7 @@ import com.snugdoug.fsjdatabase.annotation.Column;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 
-@Table(name = "TableNumberTwo")
+@Table
 public class TableNumberTwo {
     @Column(name = "firstName")
     String firstName;

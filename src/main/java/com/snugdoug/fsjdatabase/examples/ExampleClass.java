@@ -108,6 +108,7 @@ public class ExampleClass {
         // finding data
         System.out.println(data.findById(TableNumberOne.class, 28));
         System.out.println(data.findByValueContaining(TableNumberOne.class, "firstName", "Jimmy"));
+        System.out.println(data.findAllValuesOfKey(TableNumberOne.class, "firstName"));
 
 
         try {
@@ -121,7 +122,7 @@ public class ExampleClass {
     }
 
 
-    // ! Not Recommended, from what I know it doesn't find this, this is a example for a separate class table !
+    // ! Not Recommended, from what I know it doesn't find this, this is an example for a separate class table !
 
 //    @Table(name = "TableNumberTwo")
 //    public class TableNumberTwo {

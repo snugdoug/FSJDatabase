@@ -316,6 +316,13 @@ public class DataManager {
         }
     }
 
+    /**
+     * Updates a data file by id (id should be in data (2nd argument))
+     *
+     * @param table the table to search for the data file
+     * @param data data to add
+     * @throws RuntimeException throws from invalid data
+     */
     public void updateById(Class table, LinkedHashMap data) throws RuntimeException {
 
         String idName = getTableIdName(table);
@@ -435,6 +442,13 @@ public class DataManager {
         }
     }
 
+    /**
+     * Gets data from a data file by id
+     *
+     * @param table the table to find the data file of
+     * @param id the id of the data file to find
+     * @return returns a {@link LinkedHashMap} of the data files data
+     */
     public LinkedHashMap findById(Class table, int id) {
         String tableName = table.getSimpleName();
         String targetFileLocation =  FSJDatabaseStructure.tablesDir + "/" + tableName + "/" + id + ".txt";
@@ -479,6 +493,39 @@ public class DataManager {
                                     finalContent.putAll(parser(line));
                                 }
                             }
+
+                        } catch (IOException e) {
+                            throw new RuntimeException("Failed to read file: '" + file.toFile() + "'\n" + e);
+                        }
+
+                    });
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to walk through files in '" + targetDir + "'\n" + e);
+        }
+        return finalContent;
+    }
+
+
+
+    public LinkedList<Object> findAllValuesOfKey(Class table, String key) {
+        String tableName = table.getSimpleName();
+        LinkedList<Object> finalContent = new LinkedList<>();
+        String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
+
+        try {
+            Stream<Path> paths = Files.walk(Paths.get(targetDir));
+            paths
+                    .filter(Files::isRegularFile).
+                    forEach(file -> {
+                        try {
+                            Properties props = new Properties();
+                            props.load(new FileReader(file.toFile()));
+
+                            String value = props.getProperty(String.valueOf(key), "EMPTY");
+
+                            System.out.println(value);
+
+                            finalContent.add(key + "=" + value);
 
                         } catch (IOException e) {
                             throw new RuntimeException("Failed to read file: '" + file.toFile() + "'\n" + e);

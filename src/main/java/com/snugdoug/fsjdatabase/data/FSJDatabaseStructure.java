@@ -36,7 +36,7 @@ public class FSJDatabaseStructure {
     protected static boolean doesStructureExist = false; // false by default
     private static String currentDir = System.getProperty("user.dir");
 
-    protected static void create(Path rootFSJDatabaseDirectory) throws IOException {
+    public static void create(Path rootFSJDatabaseDirectory) throws IOException {
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
             createStructure(rootFSJDatabaseDirectory, FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
@@ -44,7 +44,7 @@ public class FSJDatabaseStructure {
             createStructure(rootFSJDatabaseDirectory, "FSJDatabase");
     }
 
-    protected static void create() throws IOException {
+    public static void create() throws IOException {
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
             createStructure(Path.of(currentDir), FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
@@ -52,7 +52,7 @@ public class FSJDatabaseStructure {
             createStructure(Path.of(currentDir), "FSJDatabase");
     }
 
-    private static void createStructure(Path rootDirectory, String rootFSJDatabaseDirectoryName) throws IOException {
+    public static void createStructure(Path rootDirectory, String rootFSJDatabaseDirectoryName) throws IOException {
         root = rootDirectory + "/" + rootFSJDatabaseDirectoryName;
         dataDir = rootFSJDatabaseDirectoryName + "/" + "data";
         tablesDir = rootFSJDatabaseDirectoryName + "/" + "tables";
@@ -74,7 +74,6 @@ public class FSJDatabaseStructure {
 
         String tableName = table.getSimpleName();
         FileManager.mkdir(tablesDir + "/" + tableName);
-        FileManager.createFile(tablesDir + "/" + tableName + "/" + tableName);
 
         try {
             Writer writer = new FileWriter(dataDir + "/" + "autoIncrement.fsj", true);
