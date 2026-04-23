@@ -35,6 +35,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
+import static com.snugdoug.fsjdatabase.data.Parser.parse;
+
 
 /**
  * Handles everything related to data managing
@@ -68,7 +70,6 @@ public class DataManager {
      */
 
     public void addToTable(Class table, LinkedHashMap dataToAdd) throws IOException, RuntimeException {
-
         // check for flags of invalid data/inproper initialization
         if(!isFSJDatabaseInitialized)
             throw new RuntimeException("FSJDatabase is not initialized");
@@ -399,7 +400,7 @@ public class DataManager {
 
                             for (String line : lines) {
                                 if(!line.contains(idName)) {
-                                    content.putAll(parser(line));
+                                    content.putAll(parse(line));
                                 } else {
                                     id = Integer.parseInt(line.trim().substring(idName.length() + 1));
                                 }
@@ -458,7 +459,7 @@ public class DataManager {
             BufferedReader reader = new BufferedReader(new FileReader(targetFileLocation));
 
             for (String line : reader.lines().toList()) {
-                content.putAll(parser(line));
+                content.putAll(parse(line));
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to read file: '" + targetFileLocation + "'\n" + e);
@@ -490,7 +491,7 @@ public class DataManager {
 
                             if(content.equals(searchTerm)) {
                                 for (String line : Files.readAllLines(file)) {
-                                    finalContent.putAll(parser(line));
+                                    finalContent.putAll(parse(line));
                                 }
                             }
 
@@ -655,31 +656,5 @@ public class DataManager {
 
     public List<Class> getAutoIncrement() {
         return autoIncrement;
-    }
-
-    /**
-     * Converts text into data that FSJDB can use during writing data
-     * <br><br>
-     * Given String: firstName=name<br>
-     * Output Map: (K)"firstName", (V)"name"
-     *
-     *
-     * @param dataLine the data to be parsed
-     * @return returns the parsed data
-     */
-    public Map parser(String dataLine) {
-        Map<String, String> finalData = new HashMap();
-
-        char[] part1 = dataLine.toCharArray();
-        int i = 0;
-        String[] parts = dataLine.split("\\s+(?=[^=]+=)");
-        for (String part : parts) {
-            String[] keyValue = part.split("=", 2); // Limit split to 2 parts
-            if (keyValue.length == 2) {
-                finalData.put(keyValue[0].trim(), keyValue[1].trim());
-            }
-        }
-
-        return finalData;
     }
 }
