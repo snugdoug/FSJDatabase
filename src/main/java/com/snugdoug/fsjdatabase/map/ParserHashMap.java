@@ -24,23 +24,18 @@ package com.snugdoug.fsjdatabase.map;
 
 import com.google.common.reflect.TypeToken;
 import com.snugdoug.fsjdatabase.data.Parser;
-import com.snugdoug.fsjdatabase.util.ParserConverter;
 
+import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.function.BiFunction;
 
-public class ParserMap<K, V> implements Map<K, V> {
+public class ParserHashMap<K, V> implements Map<K, V> {
     private int size = 0;
-    LinkedHashMap<K, V> data = new LinkedHashMap<>();
+    HashMap<K, V> data = new HashMap<>();
 
     private final TypeToken<K> keyToken = new TypeToken<K>(getClass()) {};
     private final TypeToken<V> valueToken = new TypeToken<V>(getClass()) {};
 
-    private final ParserConverter converter;
-
-    public ParserMap(ParserConverter converter) {
-        this.converter = converter;
-    }
 
     /**
      * Gets the size of the map.
@@ -80,13 +75,16 @@ public class ParserMap<K, V> implements Map<K, V> {
             throw new NullPointerException("The unparsed string is null");
         }
 
-        Map<String, String> rawData = Parser.parse(unparsed);
-        Map.Entry<String, String> entry = rawData.entrySet().iterator().next();
+        LinkedHashMap<K, V> dataToAdd = new LinkedHashMap<>(Parser.parse(unparsed));
 
-        K key = converter.convert(entry.getKey().toString(), keyToken);
-        V value = converter.convert(entry.getValue().toString(), valueToken);
+        if(!keyToken.getRawType().isInstance(dataToAdd.firstEntry().getKey()))
+            throw new IllegalArgumentException("Key is not type " + keyToken.getRawType());
 
-        return data.put(key, value);
+        if(!valueToken.getRawType().isInstance(dataToAdd.firstEntry().getValue()))
+            throw new IllegalArgumentException("Value is not type " + valueToken.getRawType());
+
+        size++;
+        return data.put(dataToAdd.firstEntry().getKey(), dataToAdd.firstEntry().getValue());
     }
     
     @Override
@@ -99,7 +97,7 @@ public class ParserMap<K, V> implements Map<K, V> {
 
     public void putAll(List unparsedList) {
         for(Object unparsed : unparsedList) {
-                this.put(unparsed.toString());
+            this.put(unparsed.toString());
         }
     }
 
@@ -124,13 +122,13 @@ public class ParserMap<K, V> implements Map<K, V> {
     
     @Override
     public int hashCode() { return data.hashCode(); }
-    
+
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
         return Map.super.replace(key, oldValue, newValue);
     }
 
-    public boolean replaceWithParser(K key, V oldValue, String newValueUnparsed) {
+    public boolean replaceParsed(String newValueUnparsed, K key, V oldValue) {
         Map<K, V> newValue = Parser.parse(newValueUnparsed);
 
         V finalValue = newValue.get(key);
@@ -145,13 +143,6 @@ public class ParserMap<K, V> implements Map<K, V> {
     @Override
     public V replace(K key, V value) {
         return Map.super.replace(key, value);
-    }
-
-    public boolean replaceParsed(String newValueUnparsed, K key, V oldValue) {
-        Map<K, V> newValue = Parser.parse(newValueUnparsed);
-
-        V finalValue = newValue.get(key);
-        return data.replace(key, oldValue, finalValue);
     }
 
     @Override

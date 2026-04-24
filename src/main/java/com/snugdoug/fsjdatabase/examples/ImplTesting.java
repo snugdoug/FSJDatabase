@@ -23,7 +23,9 @@
 package com.snugdoug.fsjdatabase.examples;
 
 import com.snugdoug.fsjdatabase.data.Parser;
+import com.snugdoug.fsjdatabase.map.ParserHashMap;
 import com.snugdoug.fsjdatabase.map.ParserMap;
+import com.snugdoug.fsjdatabase.util.DefaultParserConverter;
 
 import java.util.Map;
 
@@ -35,7 +37,7 @@ import java.util.Map;
 public class ImplTesting {
     public static void main(String[] args) {
         // create a new ParserMap
-        ParserMap<String, String> parserMap = new ParserMap<>();
+        ParserMap<String, String> parserMap = new ParserMap<>(new DefaultParserConverter()) {};
 
         // add Alice
         parserMap.put("firstName=Alice");
@@ -53,5 +55,32 @@ public class ImplTesting {
 
         // print the updated list
         System.out.println(parserMap);
+
+        // create a new ParserHashMap (basically the same except hashmap)
+        System.out.println("Parser Hash Map:");
+        ParserHashMap<String, String> parserHashMap = new ParserHashMap<>() {};
+        parserHashMap.put("firstName=Bob");
+
+        System.out.println(parserHashMap);
+
+        // replace Bob with Alice
+        parserHashMap.replaceAll((Object key, Object value) -> {
+            if(value.equals("Bob")) {
+                return "Alice";
+            } else {
+                return value.toString();
+            }
+        });
+
+        System.out.println(parserHashMap);
+
+        // Parser Testing
+        ParserMap<String, Integer> parserTesting = new ParserMap<>(new DefaultParserConverter()) {};
+        parserTesting.put("age=1");
+        parserTesting.put("test=test");
+
+        System.out.println(parserTesting);
+
+
     }
 }
