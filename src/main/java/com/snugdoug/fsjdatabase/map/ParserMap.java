@@ -86,6 +86,7 @@ public class ParserMap<K, V> implements Map<K, V> {
         K key = converter.convert(entry.getKey().toString(), keyToken);
         V value = converter.convert(entry.getValue().toString(), valueToken);
 
+        size++;
         return data.put(key, value);
     }
     

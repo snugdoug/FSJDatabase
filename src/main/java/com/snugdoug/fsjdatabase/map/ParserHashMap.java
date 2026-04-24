@@ -24,6 +24,7 @@ package com.snugdoug.fsjdatabase.map;
 
 import com.google.common.reflect.TypeToken;
 import com.snugdoug.fsjdatabase.data.Parser;
+import com.snugdoug.fsjdatabase.util.ParserConverter;
 
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
@@ -36,6 +37,11 @@ public class ParserHashMap<K, V> implements Map<K, V> {
     private final TypeToken<K> keyToken = new TypeToken<K>(getClass()) {};
     private final TypeToken<V> valueToken = new TypeToken<V>(getClass()) {};
 
+    private final ParserConverter converter;
+
+    public ParserHashMap(ParserConverter converter) {
+        this.converter = converter;
+    }
 
     /**
      * Gets the size of the map.
@@ -75,16 +81,18 @@ public class ParserHashMap<K, V> implements Map<K, V> {
             throw new NullPointerException("The unparsed string is null");
         }
 
-        LinkedHashMap<K, V> dataToAdd = new LinkedHashMap<>(Parser.parse(unparsed));
+        if(unparsed == null) {
+            throw new NullPointerException("The unparsed string is null");
+        }
 
-        if(!keyToken.getRawType().isInstance(dataToAdd.firstEntry().getKey()))
-            throw new IllegalArgumentException("Key is not type " + keyToken.getRawType());
+        Map<String, String> rawData = Parser.parse(unparsed);
+        Map.Entry<String, String> entry = rawData.entrySet().iterator().next();
 
-        if(!valueToken.getRawType().isInstance(dataToAdd.firstEntry().getValue()))
-            throw new IllegalArgumentException("Value is not type " + valueToken.getRawType());
+        K key = converter.convert(entry.getKey().toString(), keyToken);
+        V value = converter.convert(entry.getValue().toString(), valueToken);
 
         size++;
-        return data.put(dataToAdd.firstEntry().getKey(), dataToAdd.firstEntry().getValue());
+        return data.put(key, value);
     }
     
     @Override

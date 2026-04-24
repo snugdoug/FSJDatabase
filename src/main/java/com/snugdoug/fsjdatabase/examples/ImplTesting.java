@@ -58,7 +58,7 @@ public class ImplTesting {
 
         // create a new ParserHashMap (basically the same except hashmap)
         System.out.println("Parser Hash Map:");
-        ParserHashMap<String, String> parserHashMap = new ParserHashMap<>() {};
+        ParserHashMap<String, String> parserHashMap = new ParserHashMap<>(new DefaultParserConverter()) {};
         parserHashMap.put("firstName=Bob");
 
         System.out.println(parserHashMap);
