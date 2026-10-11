@@ -48,7 +48,7 @@ public class Parser {
         int i = 0;
         String[] parts = dataLine.split("\\s+(?=[^=]+=)");
         for (String part : parts) {
-            String[] keyValue = part.split("=", 2); // Limit split to 2 parts
+            String[] keyValue = part.split("=", 2);
             if (keyValue.length == 2) {
                 finalData.put(keyValue[0].trim(), keyValue[1].trim());
             }
@@ -57,7 +57,13 @@ public class Parser {
         return finalData;
     }
 
+    /**
+     * Checks if a string is valid for parsing
+     *
+     * @param dataLine the dataline to validate
+     * @return always returns true, might implement smth in the future
+     */
     public static boolean isValid(String dataLine) {
-        return dataLine.matches("^[a-zA-Z0-9_]+=[a-zA-Z0-9_\\\\s]+$");
+        return true; // Might implement something here at some point
     }
 }

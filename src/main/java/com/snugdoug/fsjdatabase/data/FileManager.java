@@ -22,8 +22,9 @@
 
 package com.snugdoug.fsjdatabase.data;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+
+import com.snugdoug.fsjdatabase.util.Logger;
 
 import java.io.File;
 import java.io.IOException;
@@ -34,7 +35,6 @@ import java.nio.file.Paths;
  * Handles making files and directories
  */
 public class FileManager {
-    private static final Logger logger = LoggerFactory.getLogger(FileManager.class);
 
     /**
      * Creates a {@code file}.
@@ -44,6 +44,8 @@ public class FileManager {
     public static void createFile(String path) {
         Path finalPath = Paths.get(path).toAbsolutePath();
         File file = new File(finalPath.toString());
+
+        Logger.debug("Attempting to create file: " + finalPath);
 
         try {
             if(!file.exists()) {

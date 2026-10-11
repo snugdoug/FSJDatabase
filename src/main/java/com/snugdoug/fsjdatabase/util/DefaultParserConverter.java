@@ -23,8 +23,10 @@
 package com.snugdoug.fsjdatabase.util;
 
 import com.google.common.reflect.TypeToken;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -40,6 +42,7 @@ public class DefaultParserConverter implements ParserConverter {
         registry.put(Boolean.class, Boolean::parseBoolean);
         registry.put(Byte.class, Byte::parseByte);
         registry.put(Short.class, Short::parseShort);
+        registry.put(SemiClass.class, SemiClass::nameOf);
     }
 
 

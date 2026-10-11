@@ -24,16 +24,22 @@ package com.snugdoug.fsjdatabase.data;
 
 import com.snugdoug.fsjdatabase.annotation.Column;
 import com.snugdoug.fsjdatabase.annotation.Id;
+import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
-import org.slf4j.Logger;
+import com.snugdoug.fsjdatabase.util.Logger;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
+import com.snugdoug.fsjdatabase.util.field.SemiField;
+import javassist.compiler.MemberResolver;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static com.snugdoug.fsjdatabase.data.Parser.parse;
 
@@ -44,18 +50,17 @@ import static com.snugdoug.fsjdatabase.data.Parser.parse;
 public class DataManager {
 
     private static boolean isFSJDatabaseInitialized;
-    private static List<Class> autoIncrement;
-    private static Logger logger = LoggerFactory.getLogger(DataManager.class);
+    private static List<SemiClass> autoIncrement;
 
 
     /**
-     *<p>This method is called to tell {@link #addToTable(Class, LinkedHashMap)} and other methods whether {@code FSJDatabase} is initialized.
+     *<p>This method is called to tell {@link #addToTable(SemiClass, LinkedHashMap)} and other methods whether {@code FSJDatabase} is initialized.
      *<p>This is needed because {@link FSJDatabaseInitializer} initializes the tables and most methods (planned or implemented)
      *will need table access
      *@param autoIncrement is changed by {@link FSJDatabaseInitializer} to tell whether the user wants auto increment or not.
      *
      */
-    protected static void dataManagerInit(List<Class> autoIncrement) {
+    protected static void dataManagerInit(List<SemiClass> autoIncrement) {
         isFSJDatabaseInitialized = true;
         DataManager.autoIncrement = autoIncrement;
     }
@@ -69,7 +74,11 @@ public class DataManager {
      * @throws IOException from {@code BufferedWriter/BufferedReader} for {@code auto incrementing}, the reason instead of using a {@code try-catch} is so users can make their own way of handling it
      */
 
-    public void addToTable(Class table, LinkedHashMap dataToAdd) throws IOException, RuntimeException {
+    public void addToTable(SemiClass table, LinkedHashMap dataToAdd) throws IOException, RuntimeException {
+
+
+        TableMeta meta = TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/meta"));
+
         // check for flags of invalid data/inproper initialization
         if(!isFSJDatabaseInitialized)
             throw new RuntimeException("FSJDatabase is not initialized");
@@ -77,42 +86,41 @@ public class DataManager {
         if(!FSJDatabaseInitializer.tables.contains(table) && !FSJDatabaseInitializer.freeTables.contains(table))
             throw new TableNotFoundException(table);
 
-        if(autoIncrement.contains(table) && dataToAdd.containsKey(getTableIdName(table)))
+        if(meta.isAutoIncrement() && dataToAdd.containsKey(getTableIdName(table))) {
+            Logger.error("Failed to add data, extra stacktrace:");
+            Logger.error("AutoIncrement List: " + autoIncrement);
+            Logger.error("DataToAdd: " + dataToAdd);
+            Logger.error("Table: " + table);
+//            Logger.error("Manual auto increment extraction with TableMeta: " + TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/meta")).isAutoIncrement());
             throw new RuntimeException("Id field cannot be in data to add when using auto incrementing");
+        }
 
-        Set<String> tableColumns = getTableColumns(table, autoIncrement.contains(table));
+        LinkedHashSet<String> tableColumns = new LinkedHashSet<>(getTableColumns(table, autoIncrement.contains(table)));
 
         if(!dataToAdd.keySet().equals(tableColumns)) {
             if(!FSJDatabaseInitializer.freeTables.contains(table))
                 throw new RuntimeException("dataToAdd's keys does not match the tables columns");
         }
 
-        if(FSJDatabaseInitializer.freeTables.contains(table)) {
-            if (autoIncrement.contains(table)) {
-                writeToDatabase(dataToAdd, table, true);
-            }
-            else {
-                writeToDatabase(dataToAdd, table, false);
-            }
-        }
+        writeToDatabase(dataToAdd, table, meta.isAutoIncrement());
+    }
+    public void addToTable(Class table, LinkedHashMap dataToAdd) throws IOException, RuntimeException {
+        Logger.debug("--- Attempting to write data ---");
+        Logger.debug("Table: " + table.getSimpleName());
+        Logger.debug("Uses autoIncrementing: " + autoIncrement.contains(SemiClass.nameOf(table.getSimpleName())));
+        Logger.debug("DataToAdd:" + dataToAdd);
 
-        else if(autoIncrement.contains(table)) {
-            writeToDatabase(dataToAdd, table, true);
-        }
-
-        // logic for adding data to table without auto increment
-        else {
-            writeToDatabase(dataToAdd, table, false);
-        }
+        Logger.debug("AutoIncrementing list: " + autoIncrement);
+        addToTable(new SemiClass(table), dataToAdd);
     }
 
-    /**
-     * Deletes data from a {@code table} by id
-     *
-     * @param table the table to delete from
-     * @param id the id to search for
-     */
-    public void deleteById(Class table, int id) {
+        /**
+         * Deletes data from a {@code table} by id
+         *
+         * @param table the table to delete from
+         * @param id the id to search for
+         */
+    public void deleteById(SemiClass table, int id) {
         Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".txt");
         targetFileLocation = targetFileLocation.toAbsolutePath();
 
@@ -123,15 +131,19 @@ public class DataManager {
         }
     }
 
+    public void deleteById(Class table, int id) {
+        deleteById(new SemiClass(table), id);
+    }
+
     /**
-     * Similar to {@link #deleteById(Class, int)}, but instead of deleting a {@code single file} it deletes from an {@code id}
+     * Similar to {@link #deleteById(SemiClass, int)}, but instead of deleting a {@code single file} it deletes from an {@code id}
      * to another {@code id} in a table
      *
      * @param table the table to delete from
      * @param fromId where to start deleting data
      * @param toId where to end deleting data
      */
-    public void deleteByFromIdToId(Class table, int fromId, int toId) {
+    public void deleteByFromIdToId(SemiClass table, int fromId, int toId) {
 
         for(int id = fromId; id <= toId; id++) {
             Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".txt");
@@ -145,8 +157,12 @@ public class DataManager {
         }
     }
 
+    public void deleteByFromIdToId(Class table, int fromId, int toId) {
+        deleteByFromIdToId(new SemiClass(table), fromId, toId);
+    }
+
     /**
-     * {@link #deleteContaining(Class, Object, Object)} is not similar to the other delete methods<br>
+     * {@link #deleteContaining(SemiClass, Object, Object)} is not similar to the other delete methods<br>
      * What this does is it first finds all files in the tables directory, then it searches through the<br>
      * contents of each.
      * <br><br>
@@ -157,7 +173,7 @@ public class DataManager {
      * @param key the key to check
      * @param value the value to check
      */
-    public void deleteContaining(Class table, Object key, Object value) {
+    public void deleteContaining(SemiClass table, Object key, Object value) {
         String tableName = table.getSimpleName();
 
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -194,6 +210,10 @@ public class DataManager {
 
     }
 
+    public void deleteContaining(Class table, Object key, Object value) {
+        deleteContaining(new SemiClass(table), key, value);
+    }
+
 
     /**
      * Updates a {@code specific keys} value in a data file found by {@code id}.
@@ -204,7 +224,7 @@ public class DataManager {
      * @param id the id to find the data
      *
      */
-    public void updateValueById(Class table, int id, Object key, Object value) {
+    public void updateValueById(SemiClass table, int id, Object key, Object value) {
         String tableName = table.getSimpleName();
         Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + tableName + "/" + id + ".txt");
 
@@ -244,6 +264,10 @@ public class DataManager {
         }
     }
 
+    public void updateValueById(Class table, int id, Object key, Object value) {
+        updateValueById(new SemiClass(table), id, key, value);
+    }
+
     /**
      * Replaces a value ({@code firstName=*value*}) in a data file found by if it contains something with a {@code new value}.
      *
@@ -252,7 +276,7 @@ public class DataManager {
      * @param value the value to search for after the key
      * @param newValue the values to replace the previous value with
      */
-    public void updateValueContaining(Class table, Object key, Object value, Object newValue) {
+    public void updateValueContaining(SemiClass table, Object key, Object value, Object newValue) {
         String tableName = table.getSimpleName();
         String targetDir =  FSJDatabaseStructure.tablesDir + "/" + tableName;
 
@@ -317,14 +341,19 @@ public class DataManager {
         }
     }
 
-    /**
-     * Updates a data file by id (id should be in data (2nd argument))
-     *
-     * @param table the table to search for the data file
-     * @param data data to add
-     * @throws RuntimeException throws from invalid data
-     */
-    public void updateById(Class table, LinkedHashMap data) throws RuntimeException {
+    public void updateValueContaining(Class table, Object key, Object value, Object newValue) {
+        updateValueContaining(new SemiClass(table), key, value, newValue);
+    }
+
+
+        /**
+         * Updates a data file by id (id should be in data (2nd argument))
+         *
+         * @param table the table to search for the data file
+         * @param data data to add
+         * @throws RuntimeException throws from invalid data
+         */
+    public void updateById(SemiClass table, LinkedHashMap data) throws RuntimeException {
 
         String idName = getTableIdName(table);
 
@@ -360,6 +389,10 @@ public class DataManager {
         }
     }
 
+    public void updateById(Class table, LinkedHashMap data) throws RuntimeException {
+        updateById(new SemiClass(table), data);
+    }
+
     /**
      * Updates a specific data file by looking for a file containing the searchData, it is sorted so no matter what you put it in it will properly sort it.
      *
@@ -368,7 +401,7 @@ public class DataManager {
      * @param data the replacement data after the data matching searchData is found
      * @throws RuntimeException throws RuntimeException mostly from invalid data
      */
-    public void updateContaining(Class table, LinkedHashMap searchData,  LinkedHashMap data) throws RuntimeException {
+    public void updateContaining(SemiClass table, LinkedHashMap searchData,  LinkedHashMap data) throws RuntimeException {
         String tableName = table.getSimpleName();
         String targetDir =  FSJDatabaseStructure.tablesDir + "/" + tableName;
 
@@ -443,6 +476,10 @@ public class DataManager {
         }
     }
 
+    public void updateContaining(Class table, LinkedHashMap searchData,  LinkedHashMap data) throws RuntimeException {
+        updateContaining(new SemiClass(table), searchData, data);
+    }
+
     /**
      * Gets data from a data file by id
      *
@@ -450,7 +487,7 @@ public class DataManager {
      * @param id the id of the data file to find
      * @return returns a {@link LinkedHashMap} of the data files data
      */
-    public LinkedHashMap findById(Class table, int id) {
+    public LinkedHashMap findById(SemiClass table, int id) {
         String tableName = table.getSimpleName();
         String targetFileLocation =  FSJDatabaseStructure.tablesDir + "/" + tableName + "/" + id + ".txt";
         LinkedHashMap content = new LinkedHashMap();
@@ -467,9 +504,20 @@ public class DataManager {
         return content;
     }
 
-    public LinkedHashMap findByValueContaining(Class table, String key, String value) {
+    public LinkedHashMap findById(Class table, int id) {
+        return findById(new SemiClass(table), id);
+    }
+
+    /**
+     * Looks everywhere in a table matching the data provided<br>
+     * @param table The table to be used
+     * @param key the key of the value to check
+     * @param value the value to look for
+     * @return returns found matches
+     */
+    public List<LinkedHashMap<?, ?>> findByValueContaining(SemiClass table, String key, String value) {
         String tableName = table.getSimpleName();
-        LinkedHashMap finalContent = new LinkedHashMap();
+        List<LinkedHashMap<?, ?>> finalContent = new ArrayList<>();
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
 
         try {
@@ -489,10 +537,12 @@ public class DataManager {
 
                             String searchTerm = key + "=" +value;
 
-                            if(content.equals(searchTerm)) {
+                            if(content.contains(searchTerm)) {
+                                LinkedHashMap data = new LinkedHashMap();
                                 for (String line : Files.readAllLines(file)) {
-                                    finalContent.putAll(parse(line));
+                                    data.putAll(parse(line));
                                 }
+                                finalContent.add(data);
                             }
 
                         } catch (IOException e) {
@@ -506,9 +556,11 @@ public class DataManager {
         return finalContent;
     }
 
+    public List<LinkedHashMap<?, ?>> findByValueContaining(Class table, String key, String value) {
+        return findByValueContaining(new SemiClass(table), key, value);
+    }
 
-
-    public LinkedList<Object> findAllValuesOfKey(Class table, String key) {
+    public LinkedList<Object> findAllValuesOfKey(SemiClass table, String key) {
         String tableName = table.getSimpleName();
         LinkedList<Object> finalContent = new LinkedList<>();
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -524,8 +576,6 @@ public class DataManager {
 
                             String value = props.getProperty(String.valueOf(key), "EMPTY");
 
-                            System.out.println(value);
-
                             finalContent.add(key + "=" + value);
 
                         } catch (IOException e) {
@@ -539,16 +589,20 @@ public class DataManager {
         return finalContent;
     }
 
+    public LinkedList<Object> findAllValuesOfKey(Class table, String key) {
+        return findAllValuesOfKey(new SemiClass(table), key);
+    }
+
     /**
      * This method handles writing things to the database, the reason this method exists is so the<br>
-     * {@link #addToTable(Class, LinkedHashMap)} isn't way longer than it should be.
+     * {@link #addToTable(SemiClass, LinkedHashMap)} isn't way longer than it should be.
      *
      * @param dataToAdd the data to add
      * @param table the table to add the data to
      * @param autoIncrement if the table uses auto incrementing
-     * @throws IOException gives IOException from BufferedWriter, why its thrown is explained in the method {@link #addToTable(Class, LinkedHashMap)}
+     * @throws IOException gives IOException from BufferedWriter, why its thrown is explained in the method {@link #addToTable(SemiClass, LinkedHashMap)}
      */
-    private void writeToDatabase(Map dataToAdd, Class table, boolean autoIncrement) throws IOException {
+    private void writeToDatabase(Map dataToAdd, SemiClass table, boolean autoIncrement) throws IOException {
         if(autoIncrement) {
             int id = AutoIncrement.getId(table);
 
@@ -583,7 +637,7 @@ public class DataManager {
                 throw new NullPointerException("Could not find the property id in dataToAdd or failed to parse int of id\n" + e);
             }
 
-            String targetFileLocation = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id;
+            String targetFileLocation = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".txt";
             FileManager.createFile(targetFileLocation);
 
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(targetFileLocation));
@@ -603,30 +657,19 @@ public class DataManager {
     }
 
     /**
-     * Gets the table columns of a class, this is needed to detect if a data map given is invalid to the columns in {@link #addToTable(Class, LinkedHashMap)}.
+     * Gets the table columns of a class, this is needed to detect if a data map given is invalid to the columns in {@link #addToTable(SemiClass, LinkedHashMap)}.
      *
      * @param table the table to get the columns of
      * @param autoIncrement when not using auto incrementing it will add the @id annotation name to match the given map data if it's not already invalid
      * @return returns a set of columns
      */
-    public Set<String> getTableColumns(Class table, boolean autoIncrement) {
-        Set<String> columns = new HashSet<>();
-        for (Field field : table.getDeclaredFields()) {
+    public Set<String> getTableColumns(SemiClass table, boolean autoIncrement) {
+        Set<String> columns;
+        TableMeta tableMeta = TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/meta"));
 
-            if(field.isAnnotationPresent(Id.class) && !autoIncrement) {
-                Id idDetail = field.getAnnotation(Id.class);
-                String idName = field.getName();
-
-                columns.add(idName);
-            }
-
-            if (field.isAnnotationPresent(Column.class)) {
-                Column columnDetail = field.getAnnotation(Column.class);
-                String colName = columnDetail.name().isEmpty() ? field.getName() : columnDetail.name();
-
-                columns.add(colName);
-            }
-        }
+        columns = new LinkedHashSet<>(tableMeta.getColumnNames());
+        if(autoIncrement)
+            columns.remove(getTableIdName(table));
         return columns;
     }
 
@@ -636,25 +679,25 @@ public class DataManager {
      * @param table the table to get the id field of
      * @return returns the id field name
      * @throws RuntimeException throws from invalid tables (table without id field)
+     *
      */
-    public String getTableIdName(Class table) throws RuntimeException {
+    public String getTableIdName(SemiClass table) throws RuntimeException {
         String id = "";
 
-        for (Field field : table.getDeclaredFields()) {
+        Path pathToMeta = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/meta");
+        TableMeta meta = TableMeta.of(pathToMeta);
 
-            if(field.isAnnotationPresent(Id.class)) {
-                String idName = field.getName();
-
-                id = idName;
+        for(SemiField field : meta.getColumnFields()) {
+            Logger.debug("In table '" + table.getSimpleName() + "' found field present: " + field);
+            if(field.getName().equals(meta.getIdField().getName())) {
+                Logger.debug("--- Found ID Name: " + field.getName() + " ---");
+                id = field.getName();
             }
-        }
-        if(id.isEmpty()) {
-            throw new RuntimeException("Id field doesn't exist!");
         }
         return id;
     }
 
-    public List<Class> getAutoIncrement() {
+    public List<SemiClass> getAutoIncrement() {
         return autoIncrement;
     }
 }

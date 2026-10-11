@@ -4,25 +4,24 @@ import com.snugdoug.fsjdatabase.annotation.Column;
 import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
+import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+import com.snugdoug.fsjdatabase.util.Logger;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.slf4j.helpers.NOPLogger;
 
+import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Stream;
 
 public class FSJDatabaseInitializer {
 
-    protected static List<Class<?>> tables = List.of();
-    protected static List<Class<?>> freeTables = List.of();
-
-    private static final Logger logger = LoggerFactory.getLogger(FSJDatabaseInitializer.class);
+    protected static List<SemiClass> tables = new ArrayList<>();
+    protected static List<SemiClass> freeTables = new ArrayList<>();
 
 
     /**
@@ -31,9 +30,17 @@ public class FSJDatabaseInitializer {
      * @param mainClass this gives the base package to {@link #scanForAnnotatedClassesAndPackages(Class)}
      */
     public FSJDatabaseInitializer(Class<?> mainClass) {
-        List<Class> results = scanForAnnotatedClassesAndPackages(mainClass);
+        List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
 
         DataManager.dataManagerInit(results);
+    }
+
+    public FSJDatabaseInitializer(boolean useDirectory) {
+        if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
+            scanForAnnotatedClassesAndPackages(FSJDatabaseConfiguration.getDirectoryForDatabaseRoot());
+        else {
+            scanForAnnotatedClassesAndPackages(Path.of("FSJDatabase"));
+        }
     }
 
     /**
@@ -43,38 +50,41 @@ public class FSJDatabaseInitializer {
      * @param mainClass this gives the base package to FSJDatabase
      * @return whether to use auto increment or not
      */
-    protected List<Class> scanForAnnotatedClassesAndPackages(Class<?> mainClass) {
+    protected List<SemiClass> scanForAnnotatedClassesAndPackages(Class<?> mainClass) {
         Reflections reflections = new Reflections(mainClass.getPackageName());
 
-        List<Class> autoIncrement = new ArrayList<>();
         // find all classes annotated with @Table
-        Set<Class<?>> tableClasses = reflections.get(Scanners.TypesAnnotated.with(Table.class).asClass());
-        Set<Class<?>> freeTableClasses = reflections.get(Scanners.TypesAnnotated.with(FreeTable.class).asClass());
+        Set<Class<?>> tableClassesUnparsed = reflections.get(Scanners.TypesAnnotated.with(Table.class).asClass());
+        Set<Class<?>> freeTableClassesUnparsed = reflections.get(Scanners.TypesAnnotated.with(FreeTable.class).asClass());
+
+        List<SemiClass> autoIncrement = new ArrayList<>();
+
+        Set<SemiClass> tableClasses = new HashSet<>();
+        Set<SemiClass> freeTableClasses = new HashSet<>();
+
+        for(Class clazz : tableClassesUnparsed) {
+            Logger.debug("Found regular table class: " + new SemiClass(clazz));
+            tableClasses.add(new SemiClass(clazz));
+        }
+        for(Class clazz : freeTableClassesUnparsed) {
+            Logger.debug("Found free table class: " + new SemiClass(clazz));
+            freeTableClasses.add(new SemiClass(clazz));
+        }
+
 
         tables = tableClasses.stream().toList();
         freeTables = freeTableClasses.stream().toList();
 
-        for (Class<?> clazz : freeTables) {
-
-
-
+        for (Class<?> clazz : freeTableClassesUnparsed) {
             if(tables.contains(clazz)) {
                 throw new RuntimeException("You can not have the '@table' and '@freeTable' annotated on the same class.");
-            }
-
-            if (FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
-                FSJDatabaseStructure.addTable(clazz);
             }
         }
 
         // initialize table classes
-        for (Class<?> clazz : tableClasses) {
+        for (Class<?> clazz : tableClassesUnparsed) {
             if(Arrays.stream(clazz.getDeclaredFields()).toList().isEmpty()) {
                 throw new RuntimeException("Table '" + clazz + "' doesn't have any data, the id column is the only needed column for it to be valid");
-            }
-
-            if (FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
-                FSJDatabaseStructure.addTable(clazz);
             }
 
             boolean hasAutoIncrement = true;
@@ -87,25 +97,28 @@ public class FSJDatabaseInitializer {
                     hasAutoIncrement = idDetail.autoIncrement();
 
                     if (hasAutoIncrement) {
-                        autoIncrement.add(clazz);
+                        Logger.debug("Found table with autoIncrement: " + field.getDeclaringClass().getSimpleName());
+                        autoIncrement.add(SemiClass.nameOf(clazz.getSimpleName()));
                     }
 
                     if (field.isAnnotationPresent(Column.class)) {
+                        Logger.debug("Found column " + field.getName() + " in table class " + field.getDeclaringClass().getSimpleName());
                         Column columnDetail = field.getAnnotation(Column.class);
                         String colName = columnDetail.name().isEmpty() ? field.getName() : columnDetail.name();
                     }
                 }
             }
             if(hasAutoIncrement) {
-                autoIncrement.add(clazz);
+                autoIncrement.add(SemiClass.nameOf(clazz.getSimpleName()));
+            }
+
+            if (FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
+                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(clazz));
             }
         }
 
         // initialize freeTable classes
-        for (Class<?> clazz : freeTables) {
-            if(FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
-                FSJDatabaseStructure.addTable(clazz);
-            }
+        for (Class clazz : freeTableClassesUnparsed) {
 
            if(Arrays.stream(clazz.getDeclaredFields()).toList().isEmpty()) {
                throw new RuntimeException("Table '" + clazz + "' doesn't have any data, the id column is the only needed column for it to be valid");
@@ -118,6 +131,7 @@ public class FSJDatabaseInitializer {
 
 
                 if (field.isAnnotationPresent(Id.class)) {
+                    Logger.debug("Found table with autoIncrement: " + field.getDeclaringClass().getSimpleName());
                     Id idDetail = field.getAnnotation(Id.class);
                     hasAutoIncrement = idDetail.autoIncrement();
                 }
@@ -128,10 +142,56 @@ public class FSJDatabaseInitializer {
                 }
             }
             if(hasAutoIncrement) {
-               autoIncrement.add(clazz);
+                autoIncrement.add(SemiClass.nameOf(clazz.getSimpleName()));
+            }
+            if(FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
+                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(clazz));
             }
         }
-        
+        return autoIncrement;
+    }
+
+    /**
+     * Much more complex scanning than other method, as the library doesn't have access to the classes.
+     *
+     * @param directory the directory to scan
+     * @return returns auto incremented tables
+     */
+    protected List<SemiClass> scanForAnnotatedClassesAndPackages(Path directory) {
+        try {
+            FSJDatabaseStructure.create();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        List<SemiClass> autoIncrement = new ArrayList<>();
+        try {
+            Files.newDirectoryStream(Path.of(FSJDatabaseStructure.tablesDir)).forEach(dir -> {
+
+                try {
+
+                    Stream<Path> paths = Files.walk(Paths.get(FSJDatabaseStructure.tablesDir));
+                    paths
+                            .filter(Files::isRegularFile).
+                            forEach(file -> {
+                                if(file.toFile().getName().equals("meta")) {
+                                    TableMeta meta = TableMeta.of(file);
+
+                                    tables.add(new SemiClass(meta.getTableName()));
+
+                                    if(meta.isAutoIncrement()) {
+                                        autoIncrement.add(SemiClass.nameOf(meta.getTableName()));
+                                    }
+                                }
+                            });
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+
+            });
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        System.out.println(tables.get(0));
         return autoIncrement;
     }
 }

@@ -22,6 +22,8 @@
 
 package com.snugdoug.fsjdatabase.data;
 
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
+
 import javax.annotation.Nonnull;
 import java.io.*;
 import java.nio.file.Files;
@@ -41,7 +43,7 @@ public class AutoIncrement {
      * @param table the table to get the current autoIncrement id of
      * @return returns the id
      */
-    public static Integer getId(Class table) {
+    public static Integer getId(SemiClass table) {
         try {
             FSJDatabaseStructure.create();
 
@@ -58,11 +60,13 @@ public class AutoIncrement {
 
             int id = Integer.parseInt(props.getProperty(table.getSimpleName(),"0"));
 
-            // ! TEMP
             return id;
         } catch (IOException e) {
             throw new RuntimeException("An IOException occurred while making the database structure" + e);
         }
+    }
+    public static Integer getId(Class table) {
+        return getId(new SemiClass(table));
     }
 
     /**
@@ -71,7 +75,7 @@ public class AutoIncrement {
      * @param table
      */
 
-    public static void incrementTableId(Class table) {
+    public static void incrementTableId(SemiClass table) {
         String removeData = table.getSimpleName();
         Path path = Path.of(FSJDatabaseStructure.autoIncrementLoc);
 
@@ -108,5 +112,8 @@ public class AutoIncrement {
         } catch (IOException e) {
             throw new RuntimeException("Failed to auto increment table: '" + table.getSimpleName() + "'" + e);
         }
+    }
+    public static void incrementTableId(Class table) {
+        incrementTableId(new SemiClass(table));
     }
 }

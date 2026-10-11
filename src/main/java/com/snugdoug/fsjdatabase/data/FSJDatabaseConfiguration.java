@@ -35,6 +35,8 @@ public class FSJDatabaseConfiguration {
 
     public static Path directoryForDatabaseRoot;
     public static String rootFSJDatabaseDirectoryName;
+    public static boolean debugEnabled;
+
     protected static boolean didChangeFSJDatabaseRootDirectoryName = false;
     protected static boolean didChangeFSJDatabaseRootPath = false;
 
@@ -68,7 +70,7 @@ public class FSJDatabaseConfiguration {
      */
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot) {
 
-        if(!directoryForDatabaseRoot.isAbsolute())
+        if(!Path.of(rootFSJDatabaseDirectoryName).isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
         rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
@@ -80,6 +82,45 @@ public class FSJDatabaseConfiguration {
 
         return this;
     }
+
+    public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot, boolean debugEnabled) {
+
+        if(!Path.of(rootFSJDatabaseDirectoryName).isAbsolute())
+            throw new RuntimeException("Root path must be absolute!");
+
+        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
+
+        FSJDatabaseConfiguration.directoryForDatabaseRoot = directoryForDatabaseRoot;
+        FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
+        FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName = true;
+        didChangeFSJDatabaseRootPath = true;
+        FSJDatabaseConfiguration.debugEnabled = true;
+
+        return this;
+    }
+
+
+
+    public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, boolean debugEnabled) {
+
+
+        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
+
+        FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
+        FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName = true;
+        FSJDatabaseConfiguration.debugEnabled = true;
+
+        return this;
+    }
+
+    public FSJDatabaseConfiguration build(boolean debugEnabled) {
+
+        FSJDatabaseConfiguration.debugEnabled = true;
+
+
+        return this;
+    }
+
 
     // getters
     public static Path getDirectoryForDatabaseRoot() {

@@ -25,6 +25,8 @@ package com.snugdoug.fsjdatabase.examples;
 import com.snugdoug.fsjdatabase.data.DataManager;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
+import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 import java.io.IOException;
 import java.util.LinkedHashMap;
@@ -39,12 +41,15 @@ import java.util.LinkedHashMap;
  *
  * <h2>Side Notes</h2>
  * I am near 99% sure that you could TECHNICALLY pair FSJDB with Spring/SpringBoot, if you do decide to do this, I haven't tried it YET, so good luck!
+ * <br>Note: I have paired it with SpringBoot now, it actually works pretty decently... after I fixed a lot of bugs.
  */
 public class ExampleClass {
     public static void main(String[] args) {
+        TableMeta meta = TableMeta.of(TableNumberOne.class);
+
         // Configuring, MUST be before the init call so it auto-detects it.
         // Characters such as /,\, etc., aren't allowed.
-        FSJDatabaseConfiguration fsjdbConfig = new FSJDatabaseConfiguration().build("FSJDB_TestingDB");
+        FSJDatabaseConfiguration fsjdbConfig = new FSJDatabaseConfiguration().build("FSJDB_TestingDB", true);
 
         // initialize fsjdb
         FSJDatabaseInitializer fsjdb = new FSJDatabaseInitializer(ExampleClass.class);
@@ -77,48 +82,62 @@ public class ExampleClass {
         noAutoIncrementData.put("id", "1");
 
         // Deleting data
-        data.deleteById(TableNumberOne.class, 5);
-        data.deleteByFromIdToId(TableNumberOne.class, 10, 11);
-        data.deleteContaining(TableNumberOne.class, "firstName", "AliceE");
+//        data.deleteById(TableNumberOne.class, 5);
+//        data.deleteByFromIdToId(TableNumberOne.class, 10, 11);
+//        data.deleteContaining(TableNumberOne.class, "firstName", "AliceE");
+//
+//        // Updating Data below is commented for testing reasons
+////        data.updateValueById(TableNumberOne.class, 28, "firstName", "Jonny");
+//        data.updateValueContaining(TableNumberOne.class, "firstName", "AliceEE", "John");
+//
+//        LinkedHashMap<String, String> updatingOneData = new LinkedHashMap<>();
+//        updatingOneData.put("firstName", "AliceEEEEE");
+//        updatingOneData.put("lastName", "AliceEEEEE");
+//        updatingOneData.put("emailName", "AliceEEEEE");
+////         commented for testing reasons
+//        updatingOneData.put("id", "27");
+//
+////        data.updateById(TableNumberOne.class, updatingOneData);
+//
+//        LinkedHashMap<String, String> updatingTwoData = new LinkedHashMap<>();
+//        updatingTwoData.put("firstName", "Jimmy");
+//        updatingTwoData.put("lastName", "Smith");
+//        updatingTwoData.put("emailName", "jimmy@fakegmail.com");
+//
+//        LinkedHashMap<String, String> updatingTwoSearchTerm = new LinkedHashMap<>();
+//        updatingTwoSearchTerm.put("firstName", "AliceEEE");
+//        updatingTwoSearchTerm.put("lastName", "Smith");
+//        updatingTwoSearchTerm.put("email", "alice@fakegmail.com");
+//
+//        data.updateContaining(TableNumberOne.class, updatingTwoSearchTerm, updatingTwoData);
+//
+//        // finding data
+//        System.out.println(data.findById(TableNumberOne.class, 28));
+//        System.out.println(data.findByValueContaining(TableNumberOne.class, "firstName", "Jimmy"));
+//        System.out.println(data.findAllValuesOfKey(TableNumberOne.class, "firstName"));
+//
+//        // getting a table metadata
+//        TableMeta tableMeta = TableMeta.of(TableNumberOne.class);
+//        System.out.println(tableMeta.getGetByColumnNames());
 
-        // Updating Data
-        data.updateValueById(TableNumberOne.class, 28, "firstName", "Jonny");
-        data.updateValueContaining(TableNumberOne.class, "firstName", "AliceEE", "John");
 
-        LinkedHashMap<String, String> updatingOneData = new LinkedHashMap<>();
-        updatingOneData.put("firstName", "AliceEEEEE");
-        updatingOneData.put("lastName", "AliceEEEEE");
-        updatingOneData.put("emailName", "AliceEEEEE");
-        updatingOneData.put("id", "27");
-
-        data.updateById(TableNumberOne.class, updatingOneData);
-
-        LinkedHashMap<String, String> updatingTwoData = new LinkedHashMap<>();
-        updatingTwoData.put("firstName", "Jimmy");
-        updatingTwoData.put("lastName", "Smith");
-        updatingTwoData.put("emailName", "jimmy@fakegmail.com");
-
-        LinkedHashMap<String, String> updatingTwoSearchTerm = new LinkedHashMap<>();
-        updatingTwoSearchTerm.put("firstName", "AliceEEE");
-        updatingTwoSearchTerm.put("lastName", "Smith");
-        updatingTwoSearchTerm.put("email", "alice@fakegmail.com");
-
-        data.updateContaining(TableNumberOne.class, updatingTwoSearchTerm, updatingTwoData);
-
-        // finding data
-        System.out.println(data.findById(TableNumberOne.class, 28));
-        System.out.println(data.findByValueContaining(TableNumberOne.class, "firstName", "Jimmy"));
-        System.out.println(data.findAllValuesOfKey(TableNumberOne.class, "firstName"));
-
-
-        try {
             // sometimes this can throw an IO exception (never have had a case where it HAS though), if it has invalid data it is VERY much likely to through a runtime exception
+        try {
             data.addToTable(TableNumberOne.class, testData);
-            data.addToTable(TableNumberThree.class, freeTableTestData);
-            data.addToTable(TableNumberTwo.class, noAutoIncrementData);
-        } catch (RuntimeException | IOException e) {
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to add data to auto increment table TableNumberOne\n" + e);
         }
+        try {
+            data.addToTable(TableNumberThree.class, freeTableTestData);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to add data to freeTable TableNumberThree\n" + e);
+        }
+        try {
+            data.addToTable(TableNumberTwo.class, noAutoIncrementData);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to add data to noAutoIncrement table TableNumberTwo\n" + e);
+        }
+
     }
 
 

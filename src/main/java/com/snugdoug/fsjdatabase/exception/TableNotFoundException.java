@@ -22,13 +22,21 @@
 
 package com.snugdoug.fsjdatabase.exception;
 
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
+
+import javax.annotation.Nonnull;
+
 public class TableNotFoundException extends RuntimeException {
     public TableNotFoundException() {
         super("");
     }
 
-    public TableNotFoundException(Class table) {
+    public TableNotFoundException(@Nonnull Class table) {
         super("Table " + "\"" + table.getCanonicalName() + "\"" + " isn't a table");
+    }
+
+    public TableNotFoundException(@Nonnull SemiClass table) {
+        super("Table " + "\"" + table.getSimpleName() + "\"" + " isn't a table");
     }
 
     public TableNotFoundException(String message) {

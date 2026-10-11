@@ -61,6 +61,12 @@ public class ImplTesting {
         ParserHashMap<String, String> parserHashMap = new ParserHashMap<>(new DefaultParserConverter()) {};
         parserHashMap.put("firstName=Bob");
 
+        ParserMap<String, String> parserMap1 = new ParserMap<>(new DefaultParserConverter()) {};
+
+        parserMap1.put("firstName=Alice");
+
+        System.out.println("Parsermap1 : " + parserMap1);
+
         System.out.println(parserHashMap);
 
         // replace Bob with Alice
@@ -76,8 +82,8 @@ public class ImplTesting {
 
         // Parser Testing
         ParserMap<String, Integer> parserTesting = new ParserMap<>(new DefaultParserConverter()) {};
-        parserTesting.put("age=1");
-        parserTesting.put("test=test");
+        parserTesting.put("BobAge=25");
+        parserTesting.put("AliceAge=30");
 
         System.out.println(parserTesting);
 

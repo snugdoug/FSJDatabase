@@ -22,16 +22,23 @@
 
 package com.snugdoug.fsjdatabase.data;
 
+import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+
 import java.io.*;
 import java.net.URI;
 import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 public class FSJDatabaseStructure {
-    protected static String root;
-    protected static String dataDir;
-    protected static String tablesDir;
-    protected static String autoIncrementLoc;
+    // DO NOT MODIFY
+    // Until I release something that fixes it, when modified it will break FSJDatabase!
+    // So if you want to break the library for fun, look here.
+    public static String root;
+    public static String dataDir;
+    public static String tablesDir;
+    public static String autoIncrementLoc;
 
     protected static boolean doesStructureExist = false; // false by default
     private static String currentDir = System.getProperty("user.dir");
@@ -65,19 +72,63 @@ public class FSJDatabaseStructure {
         doesStructureExist = true;
     }
 
-    protected static void addTable(Class table) {
+    protected static void addTable(Class table, boolean autoIncrement) {
         try {
             create();
         } catch (IOException e) {
-            throw new RuntimeException("Could not create structure! Stacktrace: \n" + e);
+            throw new RuntimeException("Could not create structure!\n" + e);
         }
 
         String tableName = table.getSimpleName();
-        FileManager.mkdir(tablesDir + "/" + tableName);
+        FileManager.mkdirs(tablesDir + "/" + tableName);
+        FileManager.mkdirs(tablesDir + "/" + tableName + "/fields");
+
+
+        String tableDir = tablesDir + "/" + tableName;
+
+        TableMeta meta = TableMeta.of(table);
+
+        String metaPath = tableDir + "/meta";
+        FileManager.createFile(metaPath);
+
+
+        try {
+
+            Writer metaWriter = new FileWriter(tableDir + "/meta", false);
+
+            meta.toMap().forEach((String k, Object v) -> {
+
+                try {
+                    metaWriter.append(k).append("=").append(v.toString()).append("\n");
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            metaWriter.flush();
+            metaWriter.close();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create table metadata file\n" + e);
+        }
+
+
+
+        meta.getColumnNames().forEach((name) -> {
+            try {
+                FileManager.createFile(tableDir + "/fields/" + name + ".fsj");
+                Writer annoWriter = new FileWriter(tableDir + "/fields/" + name + ".fsj", false);
+                HashMap<String, List<String>> map = new HashMap<>(meta.getGetFieldAnnotationsByName());
+                annoWriter.write(map.get(name).toString().replace("[","").replace("]",""));
+                annoWriter.flush();
+                annoWriter.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to create table field meta files\n" + e);
+            }
+        });
+
 
         try {
             Writer writer = new FileWriter(dataDir + "/" + "autoIncrement.fsj", true);
-            Properties props = new  Properties();
+            Properties props = new Properties();
             Reader read = new FileReader(dataDir + "/" + "autoIncrement.fsj");
             props.load(read);
 
@@ -89,7 +140,7 @@ public class FSJDatabaseStructure {
 
 
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Failed to add table to auto incrementing file\n" + e);
         }
     }
 
