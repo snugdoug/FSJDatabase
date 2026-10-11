@@ -22,17 +22,12 @@
 
 package com.snugdoug.fsjdatabase.data;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 
 /**
  * Contains the logic for configuring stuff for fsjdatabase
  */
 public class FSJDatabaseConfiguration {
-    private static final Logger logger = LoggerFactory.getLogger(FSJDatabaseConfiguration.class);
-
     public static Path directoryForDatabaseRoot;
     public static String rootFSJDatabaseDirectoryName;
     public static boolean debugEnabled;
