@@ -30,10 +30,13 @@ import java.lang.reflect.ParameterizedType;
 import java.util.*;
 import java.util.function.BiFunction;
 
+/**
+ * @deprecated Deprecated since FSJDatabase version 1.5.2.<br> In the future, this may be updated to a new class called {@code JsonParserHashMap}
+ */
+@Deprecated
 public class ParserHashMap<K, V> implements Map<K, V> {
     private int size = 0;
     HashMap<K, V> data = new HashMap<>();
-
     private final TypeToken<K> keyToken = new TypeToken<K>(getClass()) {};
     private final TypeToken<V> valueToken = new TypeToken<V>(getClass()) {};
 

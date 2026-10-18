@@ -23,6 +23,7 @@
 package com.snugdoug.fsjdatabase.util.clazz;
 
 import java.util.HashMap;
+import java.util.Objects;
 
 public class SemiClass {
     private final String className;
@@ -42,7 +43,11 @@ public class SemiClass {
 
     @Override
     public boolean equals(Object obj) {
-        return this.getClass().equals(obj.getClass());
+        if (this == obj)
+            return true;
+        if(!(obj instanceof SemiClass other))
+            return false;
+        return Objects.equals(className, other.className);
     }
     public String getClassName() {
         return className;

@@ -34,7 +34,9 @@ import java.util.stream.Collectors;
 
 /**
  * Handles all auto incrementing actions
+ * @deprecated Since FSJDatabase version 1.5.2, this is deprecated.<br> This is only used in {@code legacy} FSJDatabase now.
  */
+@Deprecated(since = "1.5.2")
 public class AutoIncrement {
 
     /**

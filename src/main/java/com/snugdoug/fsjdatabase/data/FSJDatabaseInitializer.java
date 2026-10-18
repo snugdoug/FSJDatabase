@@ -20,19 +20,22 @@ import java.util.stream.Stream;
 
 public class FSJDatabaseInitializer {
 
+    protected static boolean init;
     protected static List<SemiClass> tables = new ArrayList<>();
     protected static List<SemiClass> freeTables = new ArrayList<>();
-
 
     /**
      * This is called to initialize FSJDatabase
      *
      * @param mainClass this gives the base package to {@link #scanForAnnotatedClassesAndPackages(Class)}
      */
+    @SuppressWarnings("deprecation")
     public FSJDatabaseInitializer(Class<?> mainClass) {
         List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
 
+        init = true;
         DataManager.dataManagerInit(results);
+        JDataManager.jDataManagerInit(results);
     }
 
     public FSJDatabaseInitializer(boolean useDirectory) {

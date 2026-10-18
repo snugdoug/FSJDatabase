@@ -27,6 +27,7 @@ import com.snugdoug.fsjdatabase.exception.InvalidParserData;
 import java.util.HashMap;
 import java.util.Map;
 
+@Deprecated
 public class Parser {
     /**
      * Converts text into data that FSJDB can use during writing data

@@ -30,7 +30,7 @@ public class Logger {
     public static final String RESET = "\u001B[0m";
     public static final String RED = "\u001B[31m";
     public static final String GREEN = "\u001B[32m";
-    public static final String YELLOW = "\u001B[33m";
+    public static final String YELLOW = "\033[93m";
     public static final String CYAN = "\u001B[36m";
 
     private static String getCallerClassName(int callStackDepth) {
@@ -58,6 +58,15 @@ public class Logger {
         String callerName = getCallerClassName(4);
         callerName = callerName.replace(".", " ");
         List<String> caller = List.of(callerName.split(" "));
-        return "(" + caller.get(caller.size() - 1) + ") " + text;
+        return "(" + caller.get(caller.size() - 1) + "." +
+                new Throwable().fillInStackTrace().getStackTrace()[2].getMethodName() + ") " + text;
+    }
+
+    // Test the logger
+    public static void main(String[] args) {
+        Logger.info("Test");
+        Logger.warn("Test");
+        Logger.error("Test");
+        Logger.debug("Test");
     }
 }

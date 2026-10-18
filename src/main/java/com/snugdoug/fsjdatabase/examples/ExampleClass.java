@@ -43,6 +43,7 @@ import java.util.LinkedHashMap;
  * I am near 99% sure that you could TECHNICALLY pair FSJDB with Spring/SpringBoot, if you do decide to do this, I haven't tried it YET, so good luck!
  * <br>Note: I have paired it with SpringBoot now, it actually works pretty decently... after I fixed a lot of bugs.
  */
+@SuppressWarnings("deprecation")
 public class ExampleClass {
     public static void main(String[] args) {
         TableMeta meta = TableMeta.of(TableNumberOne.class);

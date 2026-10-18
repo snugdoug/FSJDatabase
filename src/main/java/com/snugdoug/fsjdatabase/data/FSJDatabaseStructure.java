@@ -22,14 +22,19 @@
 
 package com.snugdoug.fsjdatabase.data;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+import com.snugdoug.fsjdatabase.util.Logger;
 
 import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Properties;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.*;
 
 public class FSJDatabaseStructure {
     // DO NOT MODIFY
@@ -61,13 +66,14 @@ public class FSJDatabaseStructure {
 
     public static void createStructure(Path rootDirectory, String rootFSJDatabaseDirectoryName) throws IOException {
         root = rootDirectory + "/" + rootFSJDatabaseDirectoryName;
-        dataDir = rootFSJDatabaseDirectoryName + "/" + "data";
-        tablesDir = rootFSJDatabaseDirectoryName + "/" + "tables";
+        dataDir = root + "/" + "data";
+        tablesDir = root + "/" + "tables";
         autoIncrementLoc = dataDir + "/autoIncrement.fsj";
 
         FileManager.mkdir(root);
         FileManager.mkdir(dataDir);
         FileManager.createFile(dataDir + "/autoIncrement.fsj");
+        FileManager.createFile(dataDir + "/autoIncrement.json");
 
         doesStructureExist = true;
     }
@@ -79,10 +85,33 @@ public class FSJDatabaseStructure {
             throw new RuntimeException("Could not create structure!\n" + e);
         }
 
+        Map<String, Integer> idMap = JAutoIncrement.getAll();
+
+        if(idMap == null) {
+            Logger.debug("idMap was checked as null, confirmation: " + idMap);
+            idMap = new HashMap<>();
+            Logger.warn("idMap was null! Possible reasons are: First run, or an actual bug.");
+        }
+
+        try {
+            if (!idMap.containsKey(table.getSimpleName())) {
+
+                idMap.put(table.getSimpleName(), 0);
+                Writer jwriter = new FileWriter(dataDir + "/" + "autoIncrement.json", false);
+
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                Logger.debug(gson.toJson(idMap));
+                jwriter.append(gson.toJson(idMap));
+                jwriter.flush();
+                jwriter.close();
+            }
+        } catch (Exception e) {
+            Logger.error("Failed to write to data/autoIncrement.json\n" + e);
+        }
+
         String tableName = table.getSimpleName();
         FileManager.mkdirs(tablesDir + "/" + tableName);
         FileManager.mkdirs(tablesDir + "/" + tableName + "/fields");
-
 
         String tableDir = tablesDir + "/" + tableName;
 
@@ -139,6 +168,8 @@ public class FSJDatabaseStructure {
             }
 
 
+
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to add table to auto incrementing file\n" + e);
         }
@@ -153,5 +184,18 @@ public class FSJDatabaseStructure {
 
         File hypotheticTableDir = new File(tablesDir + "/" + clazz.getName());
         return !hypotheticTableDir.exists();
+    }
+
+    /**
+     * Update from legacy FSJdatabase
+     */
+    public static boolean update() {
+
+        if (!FSJDatabaseInitializer.init) {
+            Logger.error("FSJDatabase not initialized.");
+            return false;
+        }
+
+        return false;
     }
 }

@@ -22,10 +22,7 @@
 
 package com.snugdoug.fsjdatabase.cli;
 
-import com.snugdoug.fsjdatabase.data.DataManager;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
+import com.snugdoug.fsjdatabase.data.*;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.util.DefaultParserConverter;
 import com.snugdoug.fsjdatabase.util.Logger;
@@ -81,7 +78,7 @@ public class FSJDatabaseShell {
         FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration().build(pathToDBFile.toString(), pathToDBFile.getFileName());
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(true);
 
-        DataManager data = new DataManager();
+        JDataManager data = new JDataManager();
 
         Scanner scan = new Scanner(System.in);
 
@@ -147,7 +144,7 @@ public class FSJDatabaseShell {
                         term.writer().println("Table: " + cmdArray[1]);
                         term.writer().println("ID: " + cmdArray[2]);
 
-                        LinkedHashMap<String, String> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1]), id);
+                        LinkedHashMap<Object, Object> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1]), id);
                         term.writer().println(getByIdResult);
                         TableMeta getByIdTableMeta = TableMeta.of(pathToMeta);
                         } catch (Exception e) {
@@ -185,7 +182,7 @@ public class FSJDatabaseShell {
 
                     TableMeta meta = TableMeta.of(tableMetaPath);
 
-                    List<LinkedHashMap<?, ?>> dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
+                    List<LinkedHashMap<Object, Object>> dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
                     // You know I don't think we need that after I just examined my code...
 //                    dataByValueContaining.sort(new IdSortedComparator());
                     dataByValueContaining.forEach((hashmap) -> {

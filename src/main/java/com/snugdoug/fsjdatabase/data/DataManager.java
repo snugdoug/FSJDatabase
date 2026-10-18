@@ -22,31 +22,26 @@
 
 package com.snugdoug.fsjdatabase.data;
 
-import com.snugdoug.fsjdatabase.annotation.Column;
-import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.util.field.SemiField;
-import javassist.compiler.MemberResolver;
-import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import static com.snugdoug.fsjdatabase.data.Parser.parse;
 
 
 /**
- * Handles everything related to data managing
+ *
+ * @deprecated Since version 1.5.2 of FSJDatabase this is now deprecated.<br>Please migrate to {@link JDataManager} as it uses {@code JSON} instead of properties.<br> Call the {@link FSJDatabaseStructure} method update once to convert the old text files to json!
  */
+@Deprecated(forRemoval = false, since = "1.5.2")
 public class DataManager {
 
     private static boolean isFSJDatabaseInitialized;

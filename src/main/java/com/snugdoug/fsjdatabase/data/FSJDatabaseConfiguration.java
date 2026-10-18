@@ -89,7 +89,7 @@ public class FSJDatabaseConfiguration {
         FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
         FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName = true;
         didChangeFSJDatabaseRootPath = true;
-        FSJDatabaseConfiguration.debugEnabled = true;
+        FSJDatabaseConfiguration.debugEnabled = debugEnabled;
 
         return this;
     }
@@ -103,14 +103,14 @@ public class FSJDatabaseConfiguration {
 
         FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
         FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName = true;
-        FSJDatabaseConfiguration.debugEnabled = true;
+        FSJDatabaseConfiguration.debugEnabled = debugEnabled;
 
         return this;
     }
 
     public FSJDatabaseConfiguration build(boolean debugEnabled) {
 
-        FSJDatabaseConfiguration.debugEnabled = true;
+        FSJDatabaseConfiguration.debugEnabled = debugEnabled;
 
 
         return this;

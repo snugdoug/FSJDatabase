@@ -97,7 +97,15 @@ public class FileManager {
             if (!path.contains("FSJDatabase") && !FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
                 throw new SecurityException("For safety, deleting the file with the path: '" + path + "' won't be deleted as it is not in the FSJDatabase root folder.");
         }
+        if(!checkFsjdbPath(Path.of(path)))
+            throw new SecurityException("For safety, deleting the file with the path: '" + path + "' as it appears to be outside of the FSJDatabase root folder.");
+
 
         return file.delete();// possible future logic
+    }
+    public static boolean checkFsjdbPath(Path checkPath) {
+        Path absoluteChild = checkPath.toAbsolutePath().normalize();
+
+        return absoluteChild.startsWith(Path.of(FSJDatabaseStructure.root));
     }
 }

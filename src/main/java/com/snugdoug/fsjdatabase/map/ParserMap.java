@@ -29,6 +29,10 @@ import com.snugdoug.fsjdatabase.util.ParserConverter;
 import java.util.*;
 import java.util.function.BiFunction;
 
+/**
+ * @deprecated Deprecated since FSJDatabase version 1.5.2.<br> In the future, this may be updated to a new class called {@code JsonParserMap}
+ */
+@Deprecated(since="1.5.2")
 public class ParserMap<K, V> implements Map<K, V> {
     private int size = 0;
     LinkedHashMap<K, V> data = new LinkedHashMap<>();

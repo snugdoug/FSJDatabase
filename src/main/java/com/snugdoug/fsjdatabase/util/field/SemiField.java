@@ -63,7 +63,7 @@ public class SemiField {
         try {
             return Class.forName(type);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to find a base java class, your java is likely needs to see the graveyard or my code failed.\n" + e);
+            throw new RuntimeException("Failed to find a base java class, your java likely needs to see the graveyard or my code failed.\n" + e);
         }
     }
 
