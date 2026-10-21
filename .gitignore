@@ -40,6 +40,7 @@ build/
 
 ### FSJDatabase ###
 FSJDB_TestingDB
+FSJDB_TestingDB_BACKUP_TESTING
 ### FSJDatabase Compile script (maven stuff) ###
 .dtc_compile.zsh
 runFreshCLI.zsh

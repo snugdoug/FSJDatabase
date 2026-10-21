@@ -35,6 +35,18 @@ import java.util.Map;
  * @since 1.3.1
  */
 public class ImplTesting {
+
+    /**
+     * Create a new instance
+     */
+    public ImplTesting() {
+
+    }
+
+    /**
+     * The main method for implementation testing
+     * @param args the arguments
+     */
     public static void main(String[] args) {
         // create a new ParserMap
         ParserMap<String, String> parserMap = new ParserMap<>(new DefaultParserConverter()) {};

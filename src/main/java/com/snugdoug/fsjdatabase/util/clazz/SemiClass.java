@@ -22,25 +22,44 @@
 
 package com.snugdoug.fsjdatabase.util.clazz;
 
-import java.util.HashMap;
 import java.util.Objects;
 
+/**
+ * A pseudo class that allows FSJDatabase to create classes out of thin air without java saying "No."
+ */
 public class SemiClass {
     private final String className;
 
+    /**
+     * Creates a SemiClass instance off of a class name
+     * @param className the class name
+     */
     public SemiClass(String className) {
         this.className = className;
     }
 
+    /**
+     * Creates a SemiClass instance off of a regular class
+     * @param clazz the class to create a SemiClass off of
+     */
     public SemiClass(Class<?> clazz) {
         this.className = clazz.getSimpleName();
     }
 
+    /**
+     * Converts the SemiClass to a string
+     * @return the SemiClass as a string
+     */
     @Override
     public String toString() {
         return getClassName();
     }
 
+    /**
+     * Checks if the SemiClass is equal to another object
+     * @param obj the reference object with which to compare.
+     * @return if this SemiClass is equal to {@code obj}
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj)
@@ -49,14 +68,28 @@ public class SemiClass {
             return false;
         return Objects.equals(className, other.className);
     }
+
+    /**
+     * Gets the class name
+     * @return the class name
+     */
     public String getClassName() {
         return className;
     }
 
+    /**
+     * The same as {@link #getClassName()}, this exists for not wanting to change code reasons
+     * @return the class name
+     */
     public String getSimpleName() {
         return getClassName();
     }
 
+    /**
+     * Creates a new SemiClass instance off of a name
+     * @param name the name of the new SemiClass
+     * @return the SemiClass
+     */
     public static SemiClass nameOf(String name) {
         return new SemiClass(name);
     }

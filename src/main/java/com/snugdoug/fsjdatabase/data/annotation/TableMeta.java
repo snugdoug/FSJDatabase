@@ -39,6 +39,9 @@ import java.lang.reflect.Field;
 import java.nio.file.Path;
 import java.util.*;
 
+/**
+ * Gets lots of information about a {@code table}
+ */
 public class TableMeta {
     private final SemiClass tableClass;
     private final String tableName;
@@ -50,6 +53,18 @@ public class TableMeta {
     private final Map<String, SemiField> getByColumnNames;
     private final Map<String, List<String>> getFieldAnnotationsByName;
 
+    /**
+     * A private method to create a TableMeta instance
+     * @param tableClass the table class
+     * @param tableName the table name
+     * @param freeTable whether it is a free table or not
+     * @param autoIncrement whether it uses auto incrementing or not
+     * @param columnFields the column fields
+     * @param columnNames the column names
+     * @param idField the id field
+     * @param getByColumnNames map to get SemiFields by column names
+     * @param getFieldAnnotationsByName map to get the field annotations by name
+     */
     private TableMeta(SemiClass tableClass,
                       String tableName,
                       boolean freeTable,
@@ -70,6 +85,11 @@ public class TableMeta {
         this.getFieldAnnotationsByName = getFieldAnnotationsByName;
     }
 
+    /**
+     * Creates a TableMeta instance
+     * @param clazz the table class to get information of
+     * @return the new TableMeta
+     */
     public static TableMeta of(Class<?> clazz) {
         if (!clazz.isAnnotationPresent(Table.class) && !clazz.isAnnotationPresent(FreeTable.class))
             throw new RuntimeException(String.format("%s is not annotated with @Table", clazz.getSimpleName()));
@@ -124,6 +144,11 @@ public class TableMeta {
         return new TableMeta(new SemiClass(clazz.getSimpleName()), clazz.getSimpleName(), freeTable, autoIncrement, columnFields, columnNames, idField, getByColumnNames, getFieldAnnotationsByName);
     }
 
+    /**
+     * Creates a TableMeta instance
+     * @param pathToMeta the path to the meta file (root/tables/table/meta)
+     * @return the new TableMeta
+     */
     public static TableMeta of(Path pathToMeta) {
         Properties props = new Properties();
         try {
@@ -224,44 +249,83 @@ public class TableMeta {
         return new TableMeta(new SemiClass(className), className, freeTable, autoIncrement, columnFields, columnName, idField, getByColumnNames, getFieldAnnotationsByName);
     }
 
+    /**
+     * Get the table class
+     * @return {@link #tableClass}
+     */
     public SemiClass getTableClass() {
         return tableClass;
     }
 
+    /**
+     * Get the table name
+     * @return #tableName
+     */
     public String getTableName() {
         return tableName;
     }
 
+    /**
+     * Get if the table is a free table
+     * @return {@link #freeTable}
+     */
     public boolean isFreeTable() {
         return freeTable;
     }
 
+    /**
+     * Get if the table auto increments
+     * @return {@link #autoIncrement}
+     */
     public boolean isAutoIncrement() {
         return autoIncrement;
     }
 
+    /**
+     * Get the tables column fields
+     * @return {@link #columnFields}
+     */
     public List<SemiField> getColumnFields() {
         return columnFields;
     }
 
+    /**
+     * Get the tables column names
+     * @return {@link #columnNames}
+     */
     public List<String> getColumnNames() {
         return columnNames;
     }
 
+    /**
+     * Get the id field
+     * @return {@link #idField}
+     */
     public SemiField getIdField() {
         return idField;
     }
 
+    /**
+     * Get the getByColumnNames map
+     * @return {@link #getByColumnNames}
+     */
     public Map<String, SemiField> getGetByColumnNames() {
         return getByColumnNames;
     }
 
+    /**
+     * Get the getFieldAnnotationsByName map
+     * @return {@link #getFieldAnnotationsByName}
+     */
     public Map<String, List<String>> getGetFieldAnnotationsByName() {
         return getFieldAnnotationsByName;
     }
 
 
-
+    /**
+     * Convert this to a string
+     * @return TableMeta as string
+     */
     @Override
     public String toString() {
         return "TableMeta{" +
@@ -310,6 +374,11 @@ public class TableMeta {
         return m;
     }
 
+    /**
+     * Helper method to convert field annotations to a list
+     * @param annotations the annotation array
+     * @return the list of annotations
+     */
     private static List<String> convertFieldAnnotationsToList(Annotation[] annotations) {
         List<String> result = new ArrayList<>(List.of());
 

@@ -18,10 +18,25 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * The initializer for FSJDatabase<br>
+ * If this is not called before things like {@link JDataManager}, it won't be able to work
+ */
 public class FSJDatabaseInitializer {
 
+    /**
+     * If FSJDatabase is initialized
+     */
     protected static boolean init;
+
+    /**
+     * The regular tables
+     */
     protected static List<SemiClass> tables = new ArrayList<>();
+
+    /**
+     * The free tables
+     */
     protected static List<SemiClass> freeTables = new ArrayList<>();
 
     /**
@@ -31,18 +46,37 @@ public class FSJDatabaseInitializer {
      */
     @SuppressWarnings("deprecation")
     public FSJDatabaseInitializer(Class<?> mainClass) {
-        List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
+        if(!init) {
+            List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
 
-        init = true;
-        DataManager.dataManagerInit(results);
-        JDataManager.jDataManagerInit(results);
+            init = true;
+            DataManager.dataManagerInit(results);
+            JDataManager.jDataManagerInit(results);
+        } else {
+            Logger.warn("FSJDatabaseInitializer was called twice! Skipping...");
+        }
     }
 
+    /**
+     * The method to load by directory. Please only use true when using this.<br>
+     * If you intend to load by class use {@link #FSJDatabaseInitializer(Class mainclass)}
+     * @param useDirectory tells fsjdatabase whether to use directory loading or not.
+     */
+    @SuppressWarnings("deprecation")
     public FSJDatabaseInitializer(boolean useDirectory) {
-        if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
-            scanForAnnotatedClassesAndPackages(FSJDatabaseConfiguration.getDirectoryForDatabaseRoot());
-        else {
-            scanForAnnotatedClassesAndPackages(Path.of("FSJDatabase"));
+        List<SemiClass> results;
+        if(useDirectory) {
+            if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
+                results = scanForAnnotatedClassesAndPackages(FSJDatabaseConfiguration.getDirectoryForDatabaseRoot());
+            else {
+                results = scanForAnnotatedClassesAndPackages(Path.of("FSJDatabase"));
+            }
+            init = true;
+            DataManager.dataManagerInit(results);
+            JDataManager.jDataManagerInit(results);
+        } else {
+            Logger.error("If you are not using directory loading, please use the regular method (FSJDatabaseInitializer(Class<?> mainClass))");
+            Runtime.getRuntime().exit(0);
         }
     }
 
@@ -54,6 +88,7 @@ public class FSJDatabaseInitializer {
      * @return whether to use auto increment or not
      */
     protected List<SemiClass> scanForAnnotatedClassesAndPackages(Class<?> mainClass) {
+
         Reflections reflections = new Reflections(mainClass.getPackageName());
 
         // find all classes annotated with @Table
@@ -151,6 +186,9 @@ public class FSJDatabaseInitializer {
                 FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(clazz));
             }
         }
+
+        FSJDatabaseStructure.create();
+
         return autoIncrement;
     }
 
@@ -161,11 +199,9 @@ public class FSJDatabaseInitializer {
      * @return returns auto incremented tables
      */
     protected List<SemiClass> scanForAnnotatedClassesAndPackages(Path directory) {
-        try {
-            FSJDatabaseStructure.create();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+
+        FSJDatabaseStructure.create();
+
         List<SemiClass> autoIncrement = new ArrayList<>();
         try {
             Files.newDirectoryStream(Path.of(FSJDatabaseStructure.tablesDir)).forEach(dir -> {
@@ -179,7 +215,10 @@ public class FSJDatabaseInitializer {
                                 if(file.toFile().getName().equals("meta")) {
                                     TableMeta meta = TableMeta.of(file);
 
-                                    tables.add(new SemiClass(meta.getTableName()));
+                                    if(!meta.isFreeTable())
+                                        tables.add(SemiClass.nameOf(meta.getTableName()));
+                                    else
+                                        freeTables.add(SemiClass.nameOf(meta.getTableName()));
 
                                     if(meta.isAutoIncrement()) {
                                         autoIncrement.add(SemiClass.nameOf(meta.getTableName()));
@@ -194,7 +233,33 @@ public class FSJDatabaseInitializer {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        System.out.println(tables.get(0));
+
+        FSJDatabaseStructure.create();
+
         return autoIncrement;
+    }
+
+    /**
+     * Gets the regular tables
+     * @return {@link #tables}
+     */
+    public static List<SemiClass> getTables() {
+        return tables;
+    }
+
+    /**
+     * Gets the free tables
+     * @return {@link #freeTables}
+     */
+    public static List<SemiClass> getFreeTables() {
+        return freeTables;
+    }
+
+    /**
+     * Gets if FSJDatabase is initialized
+     * @return {@link #init}
+     */
+    public static boolean isInit() {
+        return init;
     }
 }

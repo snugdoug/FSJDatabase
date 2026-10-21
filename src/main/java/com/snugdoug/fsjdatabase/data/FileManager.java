@@ -28,13 +28,23 @@ import com.snugdoug.fsjdatabase.util.Logger;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.stream.Stream;
 
 /**
  * Handles making files and directories
  */
 public class FileManager {
+
+    /**
+     * Create a new instance
+     */
+    public FileManager() {
+
+    }
 
     /**
      * Creates a {@code file}.
@@ -101,11 +111,46 @@ public class FileManager {
             throw new SecurityException("For safety, deleting the file with the path: '" + path + "' as it appears to be outside of the FSJDatabase root folder.");
 
 
+
+        Logger.debug("Deleting file: " + path);
         return file.delete();// possible future logic
     }
+
+    /**
+     * Security check for {@link #deleteFsjdbFile(String)}
+     * @param checkPath the path to check
+     * @return gives true or false for if its valid or invalid
+     */
     public static boolean checkFsjdbPath(Path checkPath) {
         Path absoluteChild = checkPath.toAbsolutePath().normalize();
 
         return absoluteChild.startsWith(Path.of(FSJDatabaseStructure.root));
+    }
+
+    /**
+     * Copy's a directory
+     * @param src the source
+     * @param dest the destination
+     * @return gives true or false for if it was successful
+     */
+    public static boolean copyDir(Path src, Path dest) {
+        Logger.debug("Copying directory from " + src + " to " + dest);
+        mkdir(String.valueOf(dest));
+        try (Stream<Path> stream = Files.walk(src)) {
+            stream.forEach(source -> {
+                try {
+                    Path destination = dest.resolve(src.relativize(source));
+                    Files.copy(source, destination, StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    Logger.error("Failed to copy file.\n" + e);
+                }
+            });
+        } catch (IOException e) {
+            Logger.error("Failed to copy directory.");
+            Logger.error("Source Directory: " + src);
+            Logger.error("Destination Directory: " + dest);
+            return false;
+        }
+        return true;
     }
 }

@@ -26,6 +26,7 @@ import com.google.common.reflect.TypeToken;
 import com.snugdoug.fsjdatabase.util.GetTypeOf;
 import com.snugdoug.fsjdatabase.util.ParserConverter;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
+import com.snugdoug.fsjdatabase.data.JDataManager;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
@@ -34,7 +35,24 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A utility to help validate and parse commands in {@link FSJDatabaseShell}
+ */
 public class CommandParser {
+
+    /**
+     * Create instance
+     */
+    public CommandParser() {
+        // Nothing here currently
+    }
+
+    /**
+     * Parses command strings
+     *
+     * @param cmd the cmd, example: findByValueContaining TableNumberOne firstName Alice
+     * @return returns the split command, example: [findByValueContaining, TableNumberOne, firstName, Alice]
+     */
     public static String[] parse(String cmd) {
         String[] cmdSplit = cmd.split("\\s");
         List<String> output = new ArrayList<>();
@@ -46,7 +64,16 @@ public class CommandParser {
         return output.toArray(String[]::new);
     }
 
-    public static <T> boolean isValid(String cmd, Class<?> classWithMethod, String methodName, ParserConverter converter) {
+    /**
+     * Checks for if a command is {@code valid}
+     *
+     * @param cmd The command, example: findByValueContaining TableNumberOne firstName Alice
+     * @param classWithMethod The class to check for the method (Example: {@link JDataManager})
+     * @param methodName The method name (Example: findById)
+     * @param converter The converter, this is a utility to help parse data lines.
+     * @return gives true or false, for if its valid or invalid.
+     */
+    public static boolean isValid(String cmd, Class<?> classWithMethod, String methodName, ParserConverter converter) {
         Method finalMethod = null;
 
         for (Method method : classWithMethod.getDeclaredMethods()) {
@@ -65,7 +92,7 @@ public class CommandParser {
 
         String[] cmdSplit = parse(cmd);
 
-        List<String> cmdSplitRemoval = new ArrayList();
+        List<String> cmdSplitRemoval;
         cmdSplitRemoval = Arrays.stream(cmdSplit).collect(Collectors.toList());
 
         cmdSplitRemoval.removeFirst();
@@ -80,7 +107,7 @@ public class CommandParser {
 
         for (int i = 0; i < cmdSplit.length; i++) {
             try {
-                // Looking back at this code I have no idea of WHAT in the world I did here, but it probably work. No touchy
+                // Looking back at this code I have no idea of WHAT in the world I did here, but it probably works. No touchy
                 if (!methodTypes[i].getTypeName().equals(SemiClass.class.getName()) && !methodTypes[i].getTypeName().equals(Class.class.getName())){
                     if (!methodTypes[i].getTypeName().equals(GetTypeOf.get(converter.convert(cmdSplit[i], TypeToken.of(methodTypes[i]))).getTypeName())) {
                         return false;

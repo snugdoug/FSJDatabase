@@ -40,6 +40,13 @@ import java.util.stream.Collectors;
 public class AutoIncrement {
 
     /**
+     * Create new instance
+     */
+    public AutoIncrement() {
+
+    }
+
+    /**
      * Gets the current autoIncrement id from the autoIncrement.fsj file
      *
      * @param table the table to get the current autoIncrement id of
@@ -60,13 +67,18 @@ public class AutoIncrement {
             Properties props = new Properties();
             props.load(read);
 
-            int id = Integer.parseInt(props.getProperty(table.getSimpleName(),"0"));
-
-            return id;
+            return Integer.parseInt(props.getProperty(table.getSimpleName(),"0"));
         } catch (IOException e) {
             throw new RuntimeException("An IOException occurred while making the database structure" + e);
         }
     }
+
+    /**
+     * Gets the current autoIncrement id from the autoIncrement.fsj file
+     *
+     * @param table the table to get the current autoIncrement id of
+     * @return returns the id
+     */
     public static Integer getId(Class table) {
         return getId(new SemiClass(table));
     }
@@ -74,7 +86,7 @@ public class AutoIncrement {
     /**
      * Increments a tables autoIncrement by 1 in the autoIncrement.fsj file
      *
-     * @param table
+     * @param table The table to increment
      */
 
     public static void incrementTableId(SemiClass table) {
@@ -115,6 +127,12 @@ public class AutoIncrement {
             throw new RuntimeException("Failed to auto increment table: '" + table.getSimpleName() + "'" + e);
         }
     }
+
+    /**
+     * Increments a tables autoIncrement by 1 in the autoIncrement.fsj file
+     *
+     * @param table The table to increment
+     */
     public static void incrementTableId(Class table) {
         incrementTableId(new SemiClass(table));
     }

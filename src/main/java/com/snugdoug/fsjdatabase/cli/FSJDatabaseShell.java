@@ -44,8 +44,25 @@ import java.util.List;
 import java.util.Scanner;
 
 // TODO: Make this a separate project at some point
+
+/**
+ * The shell for FSJDatabase
+ */
 public class FSJDatabaseShell {
 
+    /**
+     * Create a new instance
+     */
+    public FSJDatabaseShell() {
+
+    }
+
+    /**
+     * The main method for the CLI
+     *
+     * @param args the arguments
+     * @throws IOException due to TerminalBuilder.builder().build(); and history.save(); throwing IOExceptions
+     */
     public static void main(String[] args) throws IOException {
         Path pathToMeta;
 
@@ -210,11 +227,13 @@ public class FSJDatabaseShell {
         }
     }
 
+    /**
+     * Checks if a path is valid for the {@link TableMeta} to use
+     * @param path the path
+     * @return gives true or false for if valid or invalid
+     */
     public static boolean validTableMetaPath(Path path) {
         return path.toFile().exists();
     }
 
-    public static boolean fullValidityCheck(String line, String methodName, String pathParam) {
-        return true;
-    }
 }

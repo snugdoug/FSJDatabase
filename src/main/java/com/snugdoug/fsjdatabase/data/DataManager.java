@@ -44,6 +44,14 @@ import static com.snugdoug.fsjdatabase.data.Parser.parse;
 @Deprecated(forRemoval = false, since = "1.5.2")
 public class DataManager {
 
+    /**
+     * Create an instance of a DataManager.<br>
+     * Preferably after FSJDatabase has been initialized.
+     */
+    public DataManager() {
+        // Nothing here currently
+    }
+
     private static boolean isFSJDatabaseInitialized;
     private static List<SemiClass> autoIncrement;
 
@@ -99,6 +107,15 @@ public class DataManager {
 
         writeToDatabase(dataToAdd, table, meta.isAutoIncrement());
     }
+
+    /**
+     * Adds data to a given table using {@link LinkedHashMap} to preserve insertion order.
+     *
+     *
+     * @param dataToAdd the data to be added to the table
+     * @param table the table used to add the data
+     * @throws IOException from {@code BufferedWriter/BufferedReader} for {@code auto incrementing}, the reason instead of using a {@code try-catch} is so users can make their own way of handling it
+     */
     public void addToTable(Class table, LinkedHashMap dataToAdd) throws IOException, RuntimeException {
         Logger.debug("--- Attempting to write data ---");
         Logger.debug("Table: " + table.getSimpleName());
@@ -126,6 +143,12 @@ public class DataManager {
         }
     }
 
+    /**
+     * Deletes data from a {@code table} by id
+     *
+     * @param table the table to delete from
+     * @param id the id to search for
+     */
     public void deleteById(Class table, int id) {
         deleteById(new SemiClass(table), id);
     }
@@ -152,6 +175,14 @@ public class DataManager {
         }
     }
 
+    /**
+     * Similar to {@link #deleteById(SemiClass, int)}, but instead of deleting a {@code single file} it deletes from an {@code id}
+     * to another {@code id} in a table
+     *
+     * @param table the table to delete from
+     * @param fromId where to start deleting data
+     * @param toId where to end deleting data
+     */
     public void deleteByFromIdToId(Class table, int fromId, int toId) {
         deleteByFromIdToId(new SemiClass(table), fromId, toId);
     }
@@ -204,7 +235,18 @@ public class DataManager {
         }
 
     }
-
+    /**
+     * {@link #deleteContaining(SemiClass, Object, Object)} is not similar to the other delete methods<br>
+     * What this does is it first finds all files in the tables directory, then it searches through the<br>
+     * contents of each.
+     * <br><br>
+     *If it finds something that matches the value to the key given, it deletes it.
+     *
+     *
+     * @param table the table to delete from
+     * @param key the key to check
+     * @param value the value to check
+     */
     public void deleteContaining(Class table, Object key, Object value) {
         deleteContaining(new SemiClass(table), key, value);
     }
@@ -259,6 +301,15 @@ public class DataManager {
         }
     }
 
+    /**
+     * Updates a {@code specific keys} value in a data file found by {@code id}.
+     *
+     * @param table the table to find the data with
+     * @param key the key to change the value of in the file
+     * @param value the updated value
+     * @param id the id to find the data
+     *
+     */
     public void updateValueById(Class table, int id, Object key, Object value) {
         updateValueById(new SemiClass(table), id, key, value);
     }
@@ -336,6 +387,14 @@ public class DataManager {
         }
     }
 
+    /**
+     * Replaces a value ({@code firstName=*value*}) in a data file found by if it contains something with a {@code new value}.
+     *
+     * @param table the table to search the data file
+     * @param key the key to change the value of in the file
+     * @param value the value to search for after the key
+     * @param newValue the values to replace the previous value with
+     */
     public void updateValueContaining(Class table, Object key, Object value, Object newValue) {
         updateValueContaining(new SemiClass(table), key, value, newValue);
     }
@@ -384,6 +443,13 @@ public class DataManager {
         }
     }
 
+    /**
+     * Updates a data file by id (id should be in data (2nd argument))
+     *
+     * @param table the table to search for the data file
+     * @param data data to add
+     * @throws RuntimeException throws from invalid data
+     */
     public void updateById(Class table, LinkedHashMap data) throws RuntimeException {
         updateById(new SemiClass(table), data);
     }
@@ -471,6 +537,14 @@ public class DataManager {
         }
     }
 
+    /**
+     * Updates a specific data file by looking for a file containing the searchData, it is sorted so no matter what you put it in it will properly sort it.
+     *
+     * @param table the table to change data with
+     * @param searchData the search term for finding what to replace
+     * @param data the replacement data after the data matching searchData is found
+     * @throws RuntimeException throws RuntimeException mostly from invalid data
+     */
     public void updateContaining(Class table, LinkedHashMap searchData,  LinkedHashMap data) throws RuntimeException {
         updateContaining(new SemiClass(table), searchData, data);
     }
@@ -499,6 +573,13 @@ public class DataManager {
         return content;
     }
 
+    /**
+     * Gets data from a data file by id
+     *
+     * @param table the table to find the data file of
+     * @param id the id of the data file to find
+     * @return returns a {@link LinkedHashMap} of the data files data
+     */
     public LinkedHashMap findById(Class table, int id) {
         return findById(new SemiClass(table), id);
     }
@@ -551,10 +632,24 @@ public class DataManager {
         return finalContent;
     }
 
+    /**
+     * Looks everywhere in a table matching the data provided<br>
+     * @param table The table to be used
+     * @param key the key of the value to check
+     * @param value the value to look for
+     * @return returns found matches
+     */
     public List<LinkedHashMap<?, ?>> findByValueContaining(Class table, String key, String value) {
         return findByValueContaining(new SemiClass(table), key, value);
     }
 
+    /**
+     * Finds all values of a key
+     *
+     * @param table the table to check
+     * @param key the key to look for
+     * @return gives a LinkedList of {@link Object}, so it may be String, Int, etc.
+     */
     public LinkedList<Object> findAllValuesOfKey(SemiClass table, String key) {
         String tableName = table.getSimpleName();
         LinkedList<Object> finalContent = new LinkedList<>();
@@ -584,6 +679,13 @@ public class DataManager {
         return finalContent;
     }
 
+    /**
+     * Finds all values of a key
+     *
+     * @param table the table to check
+     * @param key the key to look for
+     * @return gives a LinkedList of {@link Object}, so it may be String, Int, etc.
+     */
     public LinkedList<Object> findAllValuesOfKey(Class table, String key) {
         return findAllValuesOfKey(new SemiClass(table), key);
     }
@@ -692,6 +794,11 @@ public class DataManager {
         return id;
     }
 
+    /**
+     * Gets the autoIncrement list
+     *
+     * @return gives the autoIncrement List of {@link SemiClass}
+     */
     public List<SemiClass> getAutoIncrement() {
         return autoIncrement;
     }

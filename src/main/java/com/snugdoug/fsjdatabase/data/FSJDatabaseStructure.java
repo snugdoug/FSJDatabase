@@ -25,28 +25,64 @@ package com.snugdoug.fsjdatabase.data;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
 import com.snugdoug.fsjdatabase.util.Logger;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
+import com.snugdoug.fsjdatabase.util.field.SemiField;
 
 import java.io.*;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
+import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
+/**
+ * This creates the core structure of FSJDatabase.
+ */
 public class FSJDatabaseStructure {
     // DO NOT MODIFY
     // Until I release something that fixes it, when modified it will break FSJDatabase!
     // So if you want to break the library for fun, look here.
+
+    /**
+     * Create a new instance
+     */
+    public FSJDatabaseStructure() {
+
+    }
+
+    /**
+     * Root directory
+     */
     public static String root;
+
+    /**
+     * Data directory: root/data
+     */
     public static String dataDir;
+
+    /**
+     * Tables directory root/tables
+     */
     public static String tablesDir;
+
+    /**
+     * autoIncrement location (legacy): root/data/autoIncrement.fsj
+     */
     public static String autoIncrementLoc;
 
-    protected static boolean doesStructureExist = false; // false by default
-    private static String currentDir = System.getProperty("user.dir");
+    /**
+     * If the structure exists, used in legacy class {@link AutoIncrement}<br>
+     * This is false by default
+     */
+    protected static boolean doesStructureExist = false;
+
+    /**
+     * The current directory
+     */
+    private static final String currentDir = System.getProperty("user.dir");
 
     public static void create(Path rootFSJDatabaseDirectory) throws IOException {
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
@@ -56,7 +92,10 @@ public class FSJDatabaseStructure {
             createStructure(rootFSJDatabaseDirectory, "FSJDatabase");
     }
 
-    public static void create() throws IOException {
+    /**
+     * Provides the arguments for {@link #createStructure(Path, String)} so you don't have to manually provide them
+     */
+    public static void create() {
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
             createStructure(Path.of(currentDir), FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
@@ -64,7 +103,16 @@ public class FSJDatabaseStructure {
             createStructure(Path.of(currentDir), "FSJDatabase");
     }
 
-    public static void createStructure(Path rootDirectory, String rootFSJDatabaseDirectoryName) throws IOException {
+    /**
+     * Creates the structure for FSJDatabase<br>
+     * Structure:<br>
+     * - root<br>
+     * ----- root/data | tables<br>
+     * --------- root/data/autoIncrement.json | autoIncrement.fsj
+     * @param rootDirectory the root
+     * @param rootFSJDatabaseDirectoryName the directory name
+     */
+    public static void createStructure(Path rootDirectory, String rootFSJDatabaseDirectoryName) {
         root = rootDirectory + "/" + rootFSJDatabaseDirectoryName;
         dataDir = root + "/" + "data";
         tablesDir = root + "/" + "tables";
@@ -78,12 +126,17 @@ public class FSJDatabaseStructure {
         doesStructureExist = true;
     }
 
+    /**
+     * Adds a table to the structure<br>
+     * - root<br>
+     * ---- tables<br>
+     * -------- table
+     *
+     * @param table the table to add
+     * @param autoIncrement whether it auto increments
+     */
     protected static void addTable(Class table, boolean autoIncrement) {
-        try {
-            create();
-        } catch (IOException e) {
-            throw new RuntimeException("Could not create structure!\n" + e);
-        }
+        create();
 
         Map<String, Integer> idMap = JAutoIncrement.getAll();
 
@@ -175,12 +228,14 @@ public class FSJDatabaseStructure {
         }
     }
 
+    /**
+     * Checks if a table is in the database structure
+     *
+     * @param clazz the table to check
+     * @return gives true or false for if it was in the database or not
+     */
     public static boolean isTableNotInDatabase(Class<?> clazz) {
-        try {
-            create();
-        } catch (Exception e) {
-            throw new RuntimeException("Could not create FSJDatabase structure! Stacktrace: \n" + e);
-        }
+        create();
 
         File hypotheticTableDir = new File(tablesDir + "/" + clazz.getName());
         return !hypotheticTableDir.exists();
@@ -188,14 +243,156 @@ public class FSJDatabaseStructure {
 
     /**
      * Update from legacy FSJdatabase
+     * @return gives true or false for if it was successful in updating
      */
     public static boolean update() {
 
         if (!FSJDatabaseInitializer.init) {
             Logger.error("FSJDatabase not initialized.");
             return false;
+        } else {
+            create();
         }
 
-        return false;
+        Logger.debug("root: " + root);
+        LocalDateTime now = LocalDateTime.now();
+        Path absRoot = Path.of(root).toAbsolutePath();
+        Path targetBackupDir = absRoot.getParent().resolve(
+                absRoot.getFileName().toString() + "_BACKUP_" + now.toLocalTime().toString()
+        );
+        if(!FileManager.copyDir(Path.of(root), targetBackupDir)) {
+            Logger.error("Failed to copy database directory!");
+            return false;
+        }
+
+        List<Path> tablesPaths = new ArrayList<>();
+        HashMap<Path, SemiClass> tableMap = new HashMap();
+        Logger.debug("Tables: " + FSJDatabaseInitializer.tables);
+        FSJDatabaseInitializer.tables.forEach((table) -> {
+            tablesPaths.add(Path.of(tablesDir + "/" + table.getSimpleName()));
+            tableMap.put(Path.of(tablesDir + "/" + table.getSimpleName()), table);
+        });
+
+        List<Path> freeTablePaths = new ArrayList<>();
+        HashMap<Path, SemiClass> freeTableMap = new HashMap();
+        FSJDatabaseInitializer.freeTables.forEach((table) -> {
+            freeTablePaths.add(Path.of(tablesDir + "/" + table.getSimpleName()));
+            freeTableMap.put(Path.of(tablesDir + "/" + table.getSimpleName()), table);
+        });
+        AtomicReference<Float> updatedCount = new AtomicReference<>((float) 0);
+
+        Logger.debug("Paths: " + tablesPaths);
+
+        // Update autoIncrement.fsj
+        try(BufferedReader reader = new BufferedReader(new FileReader(dataDir + "/autoIncrement.fsj"))) {
+            HashMap<Object, Object> temp = new HashMap<>();
+            HashMap<SemiClass, Integer> result = new HashMap<>();
+            reader.lines().forEach((line) -> {
+               temp.putAll(Parser.parse(line));
+            });
+            for (SemiClass table : FSJDatabaseInitializer.tables) {
+                int id = Integer.parseInt(temp.get(table.getSimpleName()).toString());
+                result.put(table, id);
+            }
+            for (SemiClass freetable : FSJDatabaseInitializer.freeTables) {
+                int id = Integer.parseInt(temp.get(freetable.getSimpleName()).toString());
+                result.put(freetable, id);
+            }
+            FSJJsonWriter.writeAutoIncrementFile(result);
+            FileManager.deleteFsjdbFile(FSJDatabaseStructure.dataDir + "/autoIncrement.fsj");
+        } catch (Exception e) {
+            Logger.warn("Failed to convert autoIncrement.fsj!\n" + e);
+        }
+
+        // I have created eachception
+        tablesPaths.forEach((path) -> {
+
+                try(Stream<Path> stream = Files.walk(path)) {
+
+                    stream.forEach((file) -> {
+
+                        if(file.toFile().getName().endsWith(".txt")) {
+                            updatedCount.getAndSet((float) (updatedCount.get() + 1));
+                            TableMeta meta = TableMeta.of(Path.of(path + "/meta"));
+                            List<SemiField> fields = meta.getColumnFields();
+                            LinkedHashMap<Object, Object> result = new LinkedHashMap<>();
+                            fields.forEach((field) -> {
+                                try {
+                                    if(file.toFile().exists()) {
+                                        Properties props = new Properties();
+                                        props.load(new FileReader(file.toFile()));
+
+                                        Object toConvert = props.get(field.getName());
+
+                                        if (!(toConvert == null)) {
+                                            Logger.debug("Current field: " + field);
+                                            Logger.debug("toConvert: " + toConvert);
+                                            // Convert to basic types.
+                                            Class type = field.getSemiFieldClass();
+                                            Logger.debug("Type: " + field.getType());
+
+                                            if (type.equals(String.class)) {
+                                                toConvert = String.valueOf(toConvert);
+                                            }
+                                            if (type.equals(Integer.class)) {
+                                                toConvert = Integer.parseInt(String.valueOf(toConvert));
+                                            }
+                                            if (type.equals(Double.class)) {
+                                                toConvert = Double.parseDouble(String.valueOf(toConvert));
+                                            }
+                                            if (type.equals(Float.class)) {
+                                                toConvert = Float.parseFloat(String.valueOf(toConvert));
+                                            }
+                                            if (type.equals(Byte.class)) {
+                                                toConvert = Byte.parseByte(String.valueOf(toConvert));
+                                            }
+                                            if(!field.getName().equals(new JDataManager().getTableIdName(tableMap.get(path))))
+                                                result.put(field.getName(), toConvert);
+                                            Logger.debug(tableMap.get(path));
+                                        }
+                                    }
+                                } catch (IOException e) {
+                                    Logger.warn("Failed do the proper converting process for file: " + file + "\n" + e);
+                                }
+                            });
+                            FileManager.deleteFsjdbFile(String.valueOf(file));
+                            FSJJsonWriter.write(result, tableMap.get(path), Integer.parseInt(file.getFileName().toString().replace(".txt", "")), false);
+
+                        }
+                    });
+                } catch (Exception e) {
+                    Logger.warn("Failed to walk through directory: " + path + "\n" + e);
+                }
+        });
+        // Free Tables
+        freeTablePaths.forEach((path) -> {
+
+            try(Stream<Path> stream = Files.walk(path)) {
+
+                stream.forEach((file) -> {
+                    if(file.toFile().getName().endsWith(".txt")) {
+                        updatedCount.getAndSet((float) (updatedCount.get() + 1));
+
+                        LinkedHashMap<Object, Object> result = new LinkedHashMap<>();
+
+                        if(file.toFile().exists()) {
+                            try (BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(file)))) {
+                                reader.lines().forEach((line) -> {
+                                    result.putAll(Parser.parse(line));
+                                });
+                            } catch (Exception e) {
+                                Logger.warn("Failed to convert Free Table file: " + file);
+                            }
+                        }
+                        FileManager.deleteFsjdbFile(String.valueOf(file));
+                        FSJJsonWriter.write(result, freeTableMap.get(path), Integer.parseInt(file.getFileName().toString().replace(".txt", "")), false);
+                    }
+                });
+            } catch (Exception e) {
+                Logger.warn("Failed to walk through directory: " + path + "\n" + e);
+            }
+        });
+        Logger.info("Attempted to update " + updatedCount + " files.");
+        return true;
     }
 }

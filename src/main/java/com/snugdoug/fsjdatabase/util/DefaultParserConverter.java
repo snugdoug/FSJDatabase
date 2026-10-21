@@ -30,9 +30,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * The default {@link ParserConverter} implementation
+ */
 public class DefaultParserConverter implements ParserConverter {
     private final Map<Class, Function<String, ?>> registry = new HashMap<>();
 
+    /**
+     * Creates a new instance
+     */
     public DefaultParserConverter() {
         registry.put(String.class, s -> s);
         registry.put(Integer.class, Integer::parseInt);

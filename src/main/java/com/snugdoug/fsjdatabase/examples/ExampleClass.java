@@ -32,19 +32,31 @@ import java.io.IOException;
 import java.util.LinkedHashMap;
 
 /**
- * <h1>Examples for FSJDB, these contain all CRUD examples + making a table</h1>
- *
- * <h2>Important</h2>
+ * Examples for LEGACY FSJDB, these contain all CRUD examples + making a table
+ * <br><br>
+ * Important<br><br>
  * Make SURE that you have your init class in the base directory of your project!
  * <br>
  * Tables need to be separate classes, because FSJDB has some problems parsing tables in nested classes!
- *
- * <h2>Side Notes</h2>
+ * <br><br>
+ * Side Notes<br><br>
  * I am near 99% sure that you could TECHNICALLY pair FSJDB with Spring/SpringBoot, if you do decide to do this, I haven't tried it YET, so good luck!
  * <br>Note: I have paired it with SpringBoot now, it actually works pretty decently... after I fixed a lot of bugs.
  */
 @SuppressWarnings("deprecation")
 public class ExampleClass {
+
+    /**
+     * Creates a new instance
+     */
+    public ExampleClass() {
+
+    }
+
+    /**
+     * The main method for legacy testing
+     * @param args the arguments
+     */
     public static void main(String[] args) {
         TableMeta meta = TableMeta.of(TableNumberOne.class);
 

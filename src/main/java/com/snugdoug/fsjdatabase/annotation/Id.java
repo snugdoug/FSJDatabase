@@ -27,8 +27,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * The annotation tell FSJDatabase what the ID field is
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Id {
+    /**
+     * Configuration for auto incrementing
+     * @return gives if auto incrementing is enabled
+     */
     boolean autoIncrement() default true;
 }

@@ -27,8 +27,19 @@ import com.snugdoug.fsjdatabase.exception.InvalidParserData;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A legacy utility to convert text into usable data
+ */
 @Deprecated
 public class Parser {
+
+    /**
+     * Create a new instance
+     */
+    public Parser() {
+
+    }
+
     /**
      * Converts text into data that FSJDB can use during writing data
      * <br><br>

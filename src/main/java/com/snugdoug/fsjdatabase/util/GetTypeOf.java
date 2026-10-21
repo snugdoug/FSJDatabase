@@ -24,7 +24,24 @@ package com.snugdoug.fsjdatabase.util;
 
 import java.lang.reflect.Type;
 
+/**
+ * Utility class to get a {@link Type}
+ */
 public class GetTypeOf {
+
+    /**
+     * Create a new instance
+     */
+    public GetTypeOf() {
+
+    }
+
+    /**
+     * Gets the type of an {@link Object}
+     *
+     * @param type the object to get the {@link Type} of
+     * @return the {@link Type}
+     */
     public static Type get(Object type) {
         return type.getClass();
     }

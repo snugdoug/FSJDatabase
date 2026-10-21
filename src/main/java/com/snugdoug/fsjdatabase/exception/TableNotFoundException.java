@@ -26,19 +26,37 @@ import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 import javax.annotation.Nonnull;
 
+/**
+ * Exception for when a table can't be found
+ */
 public class TableNotFoundException extends RuntimeException {
+    /**
+     * Default instance
+     */
     public TableNotFoundException() {
         super("");
     }
 
+    /**
+     * Create the exception with a premade message with the table
+     * @param table the table
+     */
     public TableNotFoundException(@Nonnull Class table) {
         super("Table " + "\"" + table.getCanonicalName() + "\"" + " isn't a table");
     }
 
+    /**
+     * Create the exception with a premade message with the table
+     * @param table the table
+     */
     public TableNotFoundException(@Nonnull SemiClass table) {
         super("Table " + "\"" + table.getSimpleName() + "\"" + " isn't a table");
     }
 
+    /**
+     * Create the exception with a custom message
+     * @param message the message
+     */
     public TableNotFoundException(String message) {
         super(message);
     }

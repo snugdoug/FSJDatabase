@@ -31,6 +31,8 @@ import java.util.function.BiFunction;
 
 /**
  * @deprecated Deprecated since FSJDatabase version 1.5.2.<br> In the future, this may be updated to a new class called {@code JsonParserMap}
+ * @param <K> The key value
+ * @param <V> THe value value
  */
 @Deprecated(since="1.5.2")
 public class ParserMap<K, V> implements Map<K, V> {

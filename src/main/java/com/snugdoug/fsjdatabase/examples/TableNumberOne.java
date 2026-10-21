@@ -28,9 +28,19 @@ import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 import org.jspecify.annotations.NonNull;
 
-// Remove the comment below when copying this table. This is to stop FSJDatabase from making this table.
+
 // @Table
+/**
+ * Example table, make sure to uncomment the comment above when copying this!
+ */
 public class TableNumberOne {
+
+    /**
+     * Create a new instance
+     */
+    public TableNumberOne() {
+
+    }
 
     @Column(name = "firstName")
     String firstName;

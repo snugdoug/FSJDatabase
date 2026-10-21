@@ -22,12 +22,8 @@
 
 package com.snugdoug.fsjdatabase.examples;
 
-import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
-import com.snugdoug.fsjdatabase.data.JAutoIncrement;
-import com.snugdoug.fsjdatabase.data.JDataManager;
+import com.snugdoug.fsjdatabase.data.*;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonReader;
-import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
@@ -36,7 +32,27 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Examples for FSJDB, these contain all CRUD examples
+ * <br><br>
+ * Important<br><br>
+ * Make SURE that you have your init class in the base directory of your project!
+ * <br><br>
+ * Tables need to be separate classes, because FSJDB has some problems parsing tables in nested classes!
+ **/
 public class NewExampleClass {
+
+    /**
+     * Create a new instance
+     */
+    public NewExampleClass() {
+
+    }
+
+    /**
+     * Main method for examples/testing
+     * @param args the arguments
+     */
     public static void main(String[] args) {
         FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration();
         conf.build("FSJDB_TestingDB", true);
@@ -44,9 +60,6 @@ public class NewExampleClass {
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(NewExampleClass.class);
 
         JDataManager dm = new JDataManager();
-
-        LinkedHashMap<Object, Object> test = new LinkedHashMap<>();
-        test.put("id", "1");
 
         LinkedHashMap<Object, Object> dataTest1 = new LinkedHashMap<>();
         dataTest1.put("firstName", "Alice");
@@ -119,22 +132,9 @@ public class NewExampleClass {
 
 
         // adding to tables.
-        try {
-            dm.addToTable(TableNumberOne.class, dataTest1);
-        } catch (IOException e) {
-            Logger.error("Failed to add data to TableNumberOne.\n" + e);
-        }
-
-        try {
-            dm.addToTable(TableNumberTwo.class, noAutoIncrementData);
-        } catch (IOException e) {
-            Logger.error("Failed to add data to TableNumberTwo.\n" + e);
-        }
-        try {
-            dm.addToTable(TableNumberThree.class, freeTableTestData);
-        } catch (IOException e) {
-            Logger.error("Failed to add data to TableNumberThree.\n" + e);
-        }
+        dm.addToTable(TableNumberOne.class, dataTest1);
+        dm.addToTable(TableNumberTwo.class, noAutoIncrementData);
+        dm.addToTable(TableNumberThree.class, freeTableTestData);
 
         // Other potentially useful snippets
         // Getting last record

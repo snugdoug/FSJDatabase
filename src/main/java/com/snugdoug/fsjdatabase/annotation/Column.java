@@ -27,8 +27,15 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * The annotation to let FSJDatabase know a field exists.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
 public @interface Column {
+    /**
+     * The name of the field (currently unused)
+     * @return the name
+     */
     String name();
 }

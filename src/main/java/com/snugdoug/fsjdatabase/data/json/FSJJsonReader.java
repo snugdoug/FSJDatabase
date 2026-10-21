@@ -37,9 +37,25 @@ import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Reads files in the database, reducing boilerplate code.
+ */
 public class FSJJsonReader {
 
+    /**
+     * Create a new instance
+     */
+    public FSJJsonReader() {
 
+    }
+
+    /**
+     * Reads a database file
+     *
+     * @param id the id
+     * @param table the table to check
+     * @return gives a {@code LinkedHashMap<Object, Object>}, so the result can be a int, long, String, etc.
+     */
     public static LinkedHashMap<Object, Object> read(int id, SemiClass table) {
 
         String path = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";

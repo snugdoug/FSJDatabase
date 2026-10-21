@@ -24,9 +24,19 @@ package com.snugdoug.fsjdatabase.examples;
 
 import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
-// Remove the comment below when copying this table. This is to stop FSJDatabase from making this table.
+
 // @FreeTable
+/**
+ * Example table, make sure to uncomment the comment above when copying this!
+ */
 public class TableNumberThree {
+
+    /**
+     * Create a new instance
+     */
+    public TableNumberThree() {
+
+    }
 
     @Id(autoIncrement = true)
     int id;

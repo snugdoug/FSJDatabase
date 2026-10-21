@@ -22,55 +22,113 @@
 
 package com.snugdoug.fsjdatabase.util.field;
 
+import com.snugdoug.fsjdatabase.util.Logger;
+
 import java.util.List;
 
+/**
+ * Allows FSJDatabase to create Fields out of thin air without needing the actual class
+ */
 public class SemiField {
 
     private final String type;
     private final String name;
     private final List<String> annotations;
 
+    /**
+     * Creates a new SemiField instance using a regular class
+     * @param type the type
+     * @param name the name
+     * @param annotations the annotations of the field
+     */
     public SemiField(Class<?> type, String name, List<String> annotations) {
         this.type = type.getName();
         this.name = name;
         this.annotations = annotations;
     }
 
+    /**
+     * Creates a new SemiField instance using a class name
+     * @param fullClass the class name (type)
+     * @param name the name
+     * @param annotations the annotations of the field
+     */
     public SemiField(String fullClass, String name, List<String> annotations) {
-        type = fullClass;
+        switch (fullClass) {
+            case "int" -> type = "java.lang.Integer";
+            case "float" -> type = "java.lang.Float";
+            case "long" -> type = "java.lang.Long";
+            case "byte" -> type = "java.lang.Byte";
+            default -> type = fullClass;
+        }
         this.name = name;
         this.annotations = annotations;
     }
 
+    /**
+     * Get the type
+     * @return {@link #type}
+     */
     public String getType() {
         return type;
     }
 
+    /**
+     * Get the name
+     * @return {@link #name}
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Get the annotations
+     * @return {@link #annotations}
+     */
     public List<String> getAnnotations() {
         return annotations;
     }
 
+    /**
+     * Converts the SemiField to a string
+     * @return the SemiField as a string
+     */
     @Override
     public String toString() {
         return type + " " + name;
     }
 
+    /**
+     * Gets the {@link #type} as a regular class<br>
+     * This can be {@code dangerous} as it is attempting to use {@code Class.forName}
+     * @return the SemiField type as a normal class
+     */
     public Class<?> getSemiFieldClass() {
         try {
+            Logger.debug("Type: " + type);
+
             return Class.forName(type);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Failed to find a base java class, your java likely needs to see the graveyard or my code failed.\n" + e);
+            throw new RuntimeException("Could not find class of type: " + type + "\n" + e);
         }
     }
 
+    /**
+     * Checks if the SemiField has an annotation
+     * @param annotation the annotation to look for
+     * @return if it found the annotation
+     */
     public boolean isAnnotationPresent(Class<?> annotation) {
         return annotations.contains(annotation.toString());
     }
 
+    /**
+     * Creates a new SemiField
+     * @param type the type
+     * @param name the name
+     * @param annotations the annotations of the field
+     * @return the new SemiField
+     */
     public static SemiField of(Class<?> type, String name, List<String> annotations) {
         return new SemiField(type, name, annotations);
     }

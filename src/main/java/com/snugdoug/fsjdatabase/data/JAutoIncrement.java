@@ -35,11 +35,32 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Manages auto incrementing
+ */
 public class JAutoIncrement {
-    public static int get(SemiClass table) {
-        return getAll().getOrDefault(table.getSimpleName(), 0);
+
+    /**
+     * Create a new instance
+     */
+    public JAutoIncrement() {
 
     }
+
+    /**
+     * Gets the id for the table
+      * @param table the table to get the id of
+     * @return the id
+     */
+    public static int get(SemiClass table) {
+        return getAll().getOrDefault(table.getSimpleName(), -1);
+
+    }
+
+    /**
+     * Increments the id of a table
+     * @param table the table to increment
+     */
     public static void increment(SemiClass table) {
         String path = FSJDatabaseStructure.dataDir + "/autoIncrement.json";
         int id = get(table);
@@ -68,6 +89,10 @@ public class JAutoIncrement {
 
     }
 
+    /**
+     * Gives all the id values
+     * @return {@code Map<String, Integer>} of the table -> id values
+     */
     public static Map<String, Integer> getAll() {
         String path = FSJDatabaseStructure.dataDir + "/autoIncrement.json";
         FileReader reader = null;

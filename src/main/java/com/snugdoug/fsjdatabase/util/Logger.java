@@ -27,33 +27,75 @@ import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
 import java.util.List;
 
 public class Logger {
+    // Reset escape code
     public static final String RESET = "\u001B[0m";
+
+    // red escape code
     public static final String RED = "\u001B[31m";
+
+    // green escape code
     public static final String GREEN = "\u001B[32m";
+
+    // yellow escape code
     public static final String YELLOW = "\033[93m";
+
+    // cyan escape code
     public static final String CYAN = "\u001B[36m";
 
+    /**
+     * Gets the caller name
+     *
+     * @param callStackDepth the depth
+     * @return the name of the caller
+     */
     private static String getCallerClassName(int callStackDepth) {
         return Thread.currentThread().getStackTrace()[callStackDepth].getClassName();
     }
 
+    /**
+     * Displays an info message
+     * @param text the text
+     * @param <T> type param for allowing all types
+     */
     public static <T> void info(T text) {
         System.out.println(GREEN + translateText(text) + RESET);
     }
 
+    /**
+     * Displays a warn message
+     * @param text the text
+     * @param <T> type param for allowing all types
+     */
     public static <T> void warn(T text) {
         System.out.println(YELLOW + translateText(text) + RESET);
     }
 
+    /**
+     * Displays an error message
+     * @param text the text
+     * @param <T> type param for allowing all types
+     */
     public static <T> void error(T text) {
         System.out.println(RED + translateText(text) + RESET);
     }
 
+    /**
+     * Displays a debug message
+     * @param text the text
+     * @param <T> type param for allowing all types
+     */
     public static <T> void debug(T text) {
         if(FSJDatabaseConfiguration.debugEnabled)
             System.out.println(CYAN + translateText(text) + RESET);
     }
 
+    /**
+     * Translates text from "Text" to "(caller.method) Text"
+     *
+     * @param text the text
+     * @return the translated String
+     * @param <T> the type param for allowing all types
+     */
     private static <T> String translateText(T text) {
         String callerName = getCallerClassName(4);
         callerName = callerName.replace(".", " ");
@@ -62,7 +104,10 @@ public class Logger {
                 new Throwable().fillInStackTrace().getStackTrace()[2].getMethodName() + ") " + text;
     }
 
-    // Test the logger
+    /**
+     * The method for testing the logger
+     * @param args arguments
+     */
     public static void main(String[] args) {
         Logger.info("Test");
         Logger.warn("Test");

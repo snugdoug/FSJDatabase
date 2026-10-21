@@ -31,6 +31,8 @@ import java.util.*;
 import java.util.function.BiFunction;
 
 /**
+ * @param <K> The key value
+ * @param <V> THe value value
  * @deprecated Deprecated since FSJDatabase version 1.5.2.<br> In the future, this may be updated to a new class called {@code JsonParserHashMap}
  */
 @Deprecated
@@ -42,6 +44,10 @@ public class ParserHashMap<K, V> implements Map<K, V> {
 
     private final ParserConverter converter;
 
+    /**
+     * Creating a new ParserHashMap instance
+     * @param converter the converter to use
+     */
     public ParserHashMap(ParserConverter converter) {
         this.converter = converter;
     }
@@ -67,15 +73,37 @@ public class ParserHashMap<K, V> implements Map<K, V> {
         return size == 0;
     }
 
+    /**
+     * Check if the map contains a key
+     * @param key key whose presence in this map is to be tested
+     * @return if the map contains the key
+     */
     @Override
     public boolean containsKey(Object key) { return data.containsKey(key); }
 
+    /**
+     * Check if the map contains a value
+     * @param value value whose presence in this map is to be tested
+     * @return if the map contains the value
+     */
     @Override
     public boolean containsValue(Object value) { return data.containsValue(value); }
 
+    /**
+     * Gets something from the map
+     *
+     * @param key the key whose associated value is to be returned
+     * @return the result of data.get(key);
+     */
     @Override
     public V get(Object key) {  return data.get(key); }
 
+    /**
+     * Puts data into the map
+     * @param key key with which the specified value is to be associated
+     * @param value value to be associated with the specified key
+     * @return the result of data.put(key, value)
+     */
     @Override
     public V put(K key, V value) { size ++; return data.put(key, value); }
 
@@ -97,48 +125,100 @@ public class ParserHashMap<K, V> implements Map<K, V> {
         size++;
         return data.put(key, value);
     }
-    
+
+    /**
+     * Removes something from the map
+     * @param key key whose mapping is to be removed from the map
+     * @return returns data.remove(key);
+     */
     @Override
     public V remove(Object key) { size--; return data.remove(key); }
 
+    /**
+     * Puts everything from another map into this map
+     * @param m mappings to be stored in this map
+     */
     @Override
     public void putAll(Map<? extends K, ? extends V> m) {
         m.forEach((K key, V value) -> this.put(key, value));
     }
 
+    /**
+     * Puts all of a list of unparsed data into the map
+     * @param unparsedList the of unparsed data
+     */
     public void putAll(List unparsedList) {
         for(Object unparsed : unparsedList) {
             this.put(unparsed.toString());
         }
     }
 
+    /**
+     * Clear the map
+     */
     @Override
     public void clear() { size = 0; data.clear(); }
 
+    /**
+     * Get the keyset
+     * @return the keyset
+     */
     @Override
     public Set<K> keySet() { return data.keySet(); }
 
-    
+
+    /**
+     * Get the values
+     * @return the values
+     */
     @Override
     public Collection<V> values() { return data.values(); }
 
-    
+
+    /**
+     * Get the entry set
+     * @return the entry set
+     */
     @Override
     public Set<Entry<K, V>> entrySet() { return data.entrySet(); }
 
-    
+
+    /**
+     * If this map is equal to another map
+     * @param o object to be compared for equality with this map
+     * @return if this map is equal to {@code o}
+     */
     @Override
     public boolean equals(Object o) { return data.equals(o); }
 
-    
+
+    /**
+     * Get the hashcode
+     * @return gets the hashcode
+     */
     @Override
     public int hashCode() { return data.hashCode(); }
 
+    /**
+     * Replaces the value of a key with a new value
+     *
+     * @param key key with which the specified value is associated
+     * @param oldValue value expected to be associated with the specified key
+     * @param newValue value to be associated with the specified key
+     * @return the result of Map.super.replace(key, oldValue, newValue);
+     */
     @Override
     public boolean replace(K key, V oldValue, V newValue) {
         return Map.super.replace(key, oldValue, newValue);
     }
 
+    /**
+     * Replace the value of a key with unparsed data to automatically be parsed
+     * @param newValueUnparsed unparsed data to replace with
+     * @param key the key
+     * @param oldValue the old value
+     * @return the result of data.replace(key, oldValue, finalValue);
+     */
     public boolean replaceParsed(String newValueUnparsed, K key, V oldValue) {
         Map<K, V> newValue = Parser.parse(newValueUnparsed);
 
@@ -146,16 +226,31 @@ public class ParserHashMap<K, V> implements Map<K, V> {
         return data.replace(key, oldValue, finalValue);
     }
 
+    /**
+     * Replaces all matching the function
+     * @param function the function to apply to each entry
+     */
     @Override
     public void replaceAll(BiFunction<? super K, ? super V, ? extends V> function) {
         Map.super.replaceAll(function);
     }
 
+    /**
+     * Replaces something in the map
+     *
+     * @param key key with which the specified value is associated
+     * @param value value to be associated with the specified key
+     * @return the result of Map.super.replace(key, value);
+     */
     @Override
     public V replace(K key, V value) {
         return Map.super.replace(key, value);
     }
 
+    /**
+     * Converts the map to a string
+     * @return the map as a string
+     */
     @Override
     public String toString() {
         return data.toString();

@@ -23,16 +23,43 @@
 package com.snugdoug.fsjdatabase.data;
 
 import java.nio.file.Path;
+import com.snugdoug.fsjdatabase.util.Logger;
 
 /**
  * Contains the logic for configuring stuff for fsjdatabase
  */
 public class FSJDatabaseConfiguration {
+
+    /**
+     * Create a new instance
+     */
+    public FSJDatabaseConfiguration() {
+
+    }
+
+    /**
+     * The directory of the root
+     */
     public static Path directoryForDatabaseRoot;
+
+    /**
+     * The root directory name
+     */
     public static String rootFSJDatabaseDirectoryName;
+
+    /**
+     * If debug is enabled
+     */
     public static boolean debugEnabled;
 
+    /**
+     * If the config changed directory name
+     */
     protected static boolean didChangeFSJDatabaseRootDirectoryName = false;
+
+    /**
+     * If the configuration changed the root path
+     */
     protected static boolean didChangeFSJDatabaseRootPath = false;
 
     /**
@@ -78,6 +105,16 @@ public class FSJDatabaseConfiguration {
         return this;
     }
 
+    /**
+     * Creates the fsjdatabase configuration that the rest of the application uses.
+     * <br><br>
+     *
+     *
+     * @param rootFSJDatabaseDirectoryName allows for changing the root directory {@code name}
+     * @param directoryForDatabaseRoot allows for changing where the root directory {@code is}
+     * @param debugEnabled primarily used in the {@link Logger} class to enabled debug messages.
+     * @return returns this with its current properties
+     */
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot, boolean debugEnabled) {
 
         if(!Path.of(rootFSJDatabaseDirectoryName).isAbsolute())
@@ -96,6 +133,13 @@ public class FSJDatabaseConfiguration {
 
 
 
+    /**
+     * Creates the fsjdatabase configuration that the rest of the application uses.
+     *
+     * @param rootFSJDatabaseDirectoryName allows for changing the root directory {@code name}
+     * @param debugEnabled primarily used in the {@link Logger} class to enabled debug messages.
+     * @return returns this with its current properties
+     */
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, boolean debugEnabled) {
 
 
@@ -108,6 +152,12 @@ public class FSJDatabaseConfiguration {
         return this;
     }
 
+    /**
+     * Creates the fsjdatabase configuration that the rest of the application uses.
+     *
+     * @param debugEnabled primarily used in the {@link Logger} class to enabled debug messages.
+     * @return returns this with its current properties
+     */
     public FSJDatabaseConfiguration build(boolean debugEnabled) {
 
         FSJDatabaseConfiguration.debugEnabled = debugEnabled;
@@ -118,18 +168,35 @@ public class FSJDatabaseConfiguration {
 
 
     // getters
+
+    /**
+     * Gets the directory for the root
+     * @return {@link #directoryForDatabaseRoot}
+     */
     public static Path getDirectoryForDatabaseRoot() {
         return directoryForDatabaseRoot;
     }
 
+    /**
+     * Gets the root directory name
+     * @return {@link #rootFSJDatabaseDirectoryName}
+     */
     public static String getRootFSJDatabaseDirectoryName() {
         return rootFSJDatabaseDirectoryName;
     }
 
+    /**
+     * Gets if the root directory name was changed
+     * @return {@link #didChangeFSJDatabaseRootDirectoryName}
+     */
     public static boolean isDidChangeFSJDatabaseRootDirectoryName() {
         return didChangeFSJDatabaseRootDirectoryName;
     }
 
+    /**
+     * Gets if the root directory path was changed
+     * @return {@link #didChangeFSJDatabaseRootPath}
+     */
     public static boolean isDidChangeFSJDatabaseRootPath() {
         return didChangeFSJDatabaseRootPath;
     }

@@ -24,6 +24,9 @@ package com.snugdoug.fsjdatabase.util;
 
 import com.google.common.reflect.TypeToken;
 
+/**
+ * Interface for all ParserConverter's
+ */
 public interface ParserConverter {
 
     /**

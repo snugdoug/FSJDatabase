@@ -22,7 +22,15 @@
 
 package com.snugdoug.fsjdatabase.exception;
 
+import com.snugdoug.fsjdatabase.data.Parser;
+/**
+ * Exception for when data in {@link Parser} is invalid
+ */
 public class InvalidParserData extends RuntimeException {
+    /**
+     * The default method that's required to be implemented
+     * @param message the message
+     */
     public InvalidParserData(String message) {
         super(message);
     }
