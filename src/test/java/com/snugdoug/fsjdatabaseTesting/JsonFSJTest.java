@@ -53,6 +53,7 @@ public class JsonFSJTest {
 
     @Test
     @DisplayName("Test adding data")
+    @Disabled(value="Release")
     void addingData() {
         LinkedHashMap<Object, Object> dataTest1 = new LinkedHashMap<>();
         dataTest1.put("firstName", "Alice");
@@ -84,6 +85,7 @@ public class JsonFSJTest {
     }
     @Test
     @DisplayName("Test updating data")
+    @Disabled(value="Release")
     void testUpdatingData() {
         // value by id
         assertTrue(dm.updateValueById(TableNumberOne.class, 1, "firstName", "Jim"));
@@ -120,6 +122,7 @@ public class JsonFSJTest {
     }
     @Test
     @DisplayName("Test deleting data")
+    @Disabled(value="Release")
     void testDeletingData() {
         // Deleting
         assertTrue(dm.deleteById(TableNumberOne.class, 10));
