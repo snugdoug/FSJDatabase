@@ -59,6 +59,7 @@ public class FileManager {
 
         try {
             if(!file.exists()) {
+                Logger.debug("Created file: " + finalPath);
                 file.getParentFile().mkdirs();
                 file.createNewFile();
             }

@@ -1,0 +1,1 @@
+@com.snugdoug.fsjdatabase.annotation.Column(name="email")

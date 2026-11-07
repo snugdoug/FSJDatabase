@@ -5,6 +5,7 @@ import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+import com.snugdoug.fsjdatabase.exception.IdNotFoundException;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import org.reflections.Reflections;
@@ -76,13 +77,12 @@ public class FSJDatabaseInitializer {
             JDataManager.jDataManagerInit(results);
         } else {
             Logger.error("If you are not using directory loading, please use the regular method (FSJDatabaseInitializer(Class<?> mainClass))");
-            Runtime.getRuntime().exit(0);
+            Runtime.getRuntime().exit(1);
         }
     }
 
     /**
      * Using Java Reflection Library to get the Annotated Classes
-     * NOTE: In the future it is planned to have auto increment for only some tables!
      *
      * @param mainClass this gives the base package to FSJDatabase
      * @return whether to use auto increment or not
@@ -121,6 +121,7 @@ public class FSJDatabaseInitializer {
 
         // initialize table classes
         for (Class<?> clazz : tableClassesUnparsed) {
+            boolean tableHasIdField = false;
             if(Arrays.stream(clazz.getDeclaredFields()).toList().isEmpty()) {
                 throw new RuntimeException("Table '" + clazz + "' doesn't have any data, the id column is the only needed column for it to be valid");
             }
@@ -131,6 +132,7 @@ public class FSJDatabaseInitializer {
             for (Field field : clazz.getDeclaredFields()) {
 
                 if (field.isAnnotationPresent(Id.class)) {
+                    tableHasIdField = true;
                     Id idDetail = field.getAnnotation(Id.class);
                     hasAutoIncrement = idDetail.autoIncrement();
 
@@ -146,17 +148,23 @@ public class FSJDatabaseInitializer {
                     }
                 }
             }
+
+            if(!tableHasIdField) {
+                throw new IdNotFoundException(clazz);
+            }
+
             if(hasAutoIncrement) {
                 autoIncrement.add(SemiClass.nameOf(clazz.getSimpleName()));
             }
 
-            if (FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
-                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(clazz));
+            if (FSJDatabaseStructure.isTableNotInDatabase(clazz) | FSJDatabaseStructure.isTableNotFoundInAutoIncrement(clazz)) {
+                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(new SemiClass(clazz)));
             }
         }
 
         // initialize freeTable classes
         for (Class clazz : freeTableClassesUnparsed) {
+           boolean tableHasIdField = false;
 
            if(Arrays.stream(clazz.getDeclaredFields()).toList().isEmpty()) {
                throw new RuntimeException("Table '" + clazz + "' doesn't have any data, the id column is the only needed column for it to be valid");
@@ -169,9 +177,12 @@ public class FSJDatabaseInitializer {
 
 
                 if (field.isAnnotationPresent(Id.class)) {
+                    tableHasIdField = true;
                     Logger.debug("Found table with autoIncrement: " + field.getDeclaringClass().getSimpleName());
                     Id idDetail = field.getAnnotation(Id.class);
                     hasAutoIncrement = idDetail.autoIncrement();
+                } else {
+                    throw new IdNotFoundException(clazz);
                 }
 
                 if (field.isAnnotationPresent(Column.class)) {
@@ -179,11 +190,15 @@ public class FSJDatabaseInitializer {
                     String colName = columnDetail.name().isEmpty() ? field.getName() : columnDetail.name();
                 }
             }
+            if(!tableHasIdField) {
+                throw new IdNotFoundException(clazz);
+            }
             if(hasAutoIncrement) {
                 autoIncrement.add(SemiClass.nameOf(clazz.getSimpleName()));
             }
-            if(FSJDatabaseStructure.isTableNotInDatabase(clazz)) {
-                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(clazz));
+            if(FSJDatabaseStructure.isTableNotInDatabase(clazz) | FSJDatabaseStructure.isTableNotFoundInAutoIncrement(clazz)) {
+                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(new SemiClass(clazz)));
+
             }
         }
 

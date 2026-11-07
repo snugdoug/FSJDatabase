@@ -27,10 +27,7 @@ import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.util.DefaultParserConverter;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
-import org.jline.reader.History;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.reader.UserInterruptException;
+import org.jline.reader.*;
 import org.jline.reader.impl.history.DefaultHistory;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
@@ -87,12 +84,14 @@ public class FSJDatabaseShell {
         pathToDBFile = pathToDBFile.toAbsolutePath();
 
         String pathToAutoIncrement = pathToDB + "/data/autoIncrement.fsj";
+        String pathToAutoIncrementJ = pathToDB + "/data/autoIncrement.json";
 
-        if (!Path.of(pathToAutoIncrement).toFile().exists()) {
-            System.out.println("The given directory is not a FSJDatabase directory");
+        if (!Path.of(pathToAutoIncrement).toFile().exists() && !Path.of(pathToAutoIncrementJ).toFile().exists()) {
+            System.out.println("The given directory is likely not a FSJDatabase directory");
             Runtime.getRuntime().exit(1);
         }
-        FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration().build(pathToDBFile.toString(), pathToDBFile.getFileName());
+
+        FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration().build(pathToDBFile.toFile().getName(), pathToDBFile.getParent());
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(true);
 
         JDataManager data = new JDataManager();
@@ -127,7 +126,7 @@ public class FSJDatabaseShell {
             String line = "it didn't work if you see this";
             try {
                 line = reader.readLine("fsjdb > ");
-            } catch (UserInterruptException e) {
+            } catch (UserInterruptException | EndOfFileException e) {
                 term.writer().println("Goodbye.");
                 history.save();
                 Runtime.getRuntime().exit(0);
@@ -154,7 +153,7 @@ public class FSJDatabaseShell {
                 } else {
                     try {
 
-                        pathToMeta = Path.of(FSJDatabaseStructure.tablesDir + "/" + cmdArray[1] + "/meta");
+                        pathToMeta = Path.of(FSJDatabaseStructure.tablesDir() + "/" + cmdArray[1] + "/meta");
                         try {
 
                         int id = Integer.parseInt(cmdArray[2]);
@@ -193,7 +192,7 @@ public class FSJDatabaseShell {
                     term.writer().println("Invalid parameters, valid parameters are: findByValueContaining <table> <key> <value>");
                 }
                 else {
-                    Path tableMetaPath = Path.of(FSJDatabaseStructure.tablesDir + "/" + cmdArray[1] + "/meta");
+                    Path tableMetaPath = Path.of(FSJDatabaseStructure.tablesDir() + "/" + cmdArray[1] + "/meta");
 
                     if(validTableMetaPath(tableMetaPath)) {
 

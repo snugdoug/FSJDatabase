@@ -42,6 +42,8 @@ public class JsonFSJTest {
     static void init() {
         conf =  new FSJDatabaseConfiguration().build("FSJDB_TestingDB", true);
         init = new FSJDatabaseInitializer(JsonFSJTest.class);
+        Logger.info("Tables: " + FSJDatabaseInitializer.getTables());
+        Logger.info("FreeTables: " + FSJDatabaseInitializer.getFreeTables());
         dm = new JDataManager();
     }
     @AfterEach
@@ -53,7 +55,6 @@ public class JsonFSJTest {
 
     @Test
     @DisplayName("Test adding data")
-    @Disabled(value="Release")
     void addingData() {
         LinkedHashMap<Object, Object> dataTest1 = new LinkedHashMap<>();
         dataTest1.put("firstName", "Alice");
@@ -80,12 +81,12 @@ public class JsonFSJTest {
         noAutoIncrementData.put("id", "1"); // No 100% confirmation that it works with integers, feel free to give it a try though!
 
         assertTrue(dm.addToTable(TableNumberOne.class, dataTest1));
+        dm.deleteById(TableNumberThree.class, 1);
         assertTrue(dm.addToTable(TableNumberThree.class, noAutoIncrementData));
         assertTrue(dm.addToTable(TableNumberTwo.class, freeTableTestData));
     }
     @Test
     @DisplayName("Test updating data")
-    @Disabled(value="Release")
     void testUpdatingData() {
         // value by id
         assertTrue(dm.updateValueById(TableNumberOne.class, 1, "firstName", "Jim"));
@@ -122,7 +123,6 @@ public class JsonFSJTest {
     }
     @Test
     @DisplayName("Test deleting data")
-    @Disabled(value="Release")
     void testDeletingData() {
         // Deleting
         assertTrue(dm.deleteById(TableNumberOne.class, 10));

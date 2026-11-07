@@ -92,7 +92,7 @@ public class FSJDatabaseConfiguration {
      */
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot) {
 
-        if(!Path.of(rootFSJDatabaseDirectoryName).isAbsolute())
+        if(!directoryForDatabaseRoot.isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
         rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");

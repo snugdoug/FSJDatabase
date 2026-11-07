@@ -33,6 +33,7 @@ import com.snugdoug.fsjdatabase.data.JAutoIncrement;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -60,19 +61,18 @@ public class FSJJsonWriter {
      * @param autoIncrement if it auto increments or not
      */
     public static void write(LinkedHashMap map, SemiClass table, int id, boolean autoIncrement) {
-        String path = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";
-        try {
+        String path = FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id + ".json";
+        try(FileWriter writer = new FileWriter(path)) {
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String jsonString = gson.toJson(map);
-            FileWriter writer = new FileWriter(path);
+
 
             FileManager.createFile(path);
 
             Logger.debug("Writing data, id: " + id + ", autoIncrement: " + autoIncrement + ", table: " + table + ", data: " + map);
             writer.write(jsonString);
             writer.flush();
-            writer.close();
 
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -86,7 +86,7 @@ public class FSJJsonWriter {
      * @param map the data
      */
     public static void writeAutoIncrementFile(HashMap<SemiClass, Integer> map) {
-        String path = FSJDatabaseStructure.dataDir + "/" + "autoIncrement" + ".json";
+        String path = FSJDatabaseStructure.dataDir() + "/" + "autoIncrement" + ".json";
         try {
 
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
@@ -99,5 +99,9 @@ public class FSJJsonWriter {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static boolean tableContainsIdFile(int id, SemiClass table) {
+        return new File(FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id).exists();
     }
 }

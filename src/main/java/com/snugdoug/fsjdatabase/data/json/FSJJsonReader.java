@@ -58,11 +58,8 @@ public class FSJJsonReader {
      */
     public static LinkedHashMap<Object, Object> read(int id, SemiClass table) {
 
-        String path = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";
-        try {
-            FileReader reader = new FileReader(path);
-
-            reader = new FileReader(path);
+        String path = FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id + ".json";
+        try(FileReader reader = new FileReader(path)) {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             TypeToken<LinkedHashMap<Object, Object>> mapType = new TypeToken<>() {
             };
@@ -70,7 +67,7 @@ public class FSJJsonReader {
             LinkedHashMap<Object, Object> result = gson.fromJson(reader, mapType);
 
             return result;
-        } catch (FileNotFoundException e) {
+        } catch (IOException e) {
             Logger.error("Failed to read json file.\n" + e);
         }
 

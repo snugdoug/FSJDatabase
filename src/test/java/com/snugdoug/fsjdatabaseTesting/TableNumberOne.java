@@ -20,7 +20,9 @@
  * SOFTWARE.
  */
 
-package com.snugdoug.fsjdatabaseTesting;import com.snugdoug.fsjdatabase.annotation.Column;
+package com.snugdoug.fsjdatabaseTesting;
+
+import com.snugdoug.fsjdatabase.annotation.Column;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 

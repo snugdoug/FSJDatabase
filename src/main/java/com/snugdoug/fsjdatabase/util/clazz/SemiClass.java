@@ -22,6 +22,7 @@
 
 package com.snugdoug.fsjdatabase.util.clazz;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 /**
@@ -94,4 +95,12 @@ public class SemiClass {
         return new SemiClass(name);
     }
 
+    /**
+     * Gets the hashcode of SemiClass
+     * @return the hashcode
+     */
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

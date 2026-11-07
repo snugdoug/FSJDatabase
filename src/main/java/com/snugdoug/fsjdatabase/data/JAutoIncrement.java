@@ -49,7 +49,7 @@ public class JAutoIncrement {
 
     /**
      * Gets the id for the table
-      * @param table the table to get the id of
+     * @param table the table to get the id of
      * @return the id
      */
     public static int get(SemiClass table) {
@@ -66,22 +66,17 @@ public class JAutoIncrement {
         int id = get(table);
         try {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-            FileReader fileReader = new FileReader(path);
-            BufferedReader reader = new BufferedReader(fileReader);
-
-
             Map<String, Integer> resultMap = getAll();
 
             resultMap.remove(table.getSimpleName());
-            resultMap.put(table.getSimpleName(), id + 1);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(path));
+            resultMap.put(table.getSimpleName(), (id + 1));
+            try(BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
 
-            Logger.debug("Rewriting to data/autoincrement.fsj: " + resultMap);
+                Logger.debug("Rewriting to data/autoincrement.fsj: " + gson.toJson(resultMap));
 
-            writer.append(gson.toJson(resultMap));
-            writer.flush();
-            writer.close();
+                writer.append(gson.toJson(resultMap));
+                writer.flush();
+            }
 
         } catch (IOException e) {
             throw new RuntimeException(e);

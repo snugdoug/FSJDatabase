@@ -1,0 +1,8 @@
+tableClass=TableNumberTwo
+tableName=TableNumberTwo
+freeTable=true
+autoIncrement=true
+columnFields=[int id]
+columnNames=[id]
+idField=int id
+getByColumnNames={id=int id}

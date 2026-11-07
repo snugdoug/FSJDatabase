@@ -184,7 +184,7 @@ public class TableMeta {
 
             List<String> fieldAnnotations;
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir + "/" + className + "/fields/" + fieldName + ".fsj"));
+                BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + fieldName + ".fsj"));
                 String rawAnnotationLine = reader.readLine();
                 fieldAnnotations = List.of(rawAnnotationLine.split(", "));
             } catch (FileNotFoundException e) {
@@ -209,7 +209,7 @@ public class TableMeta {
         for (int i = 0; i < columnName.size(); i++) {
             SemiField field = columnFields.get(i);
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir + "/" + className + "/fields/" + field.getName() + ".fsj"));
+                BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + field.getName() + ".fsj"));
                 getFieldAnnotationsByName.put(columnName.get(i), Arrays.stream(reader.readLine().split(", ")).toList());
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Failed to create buffered reader for reading the annotation file\n" + e);
@@ -223,7 +223,7 @@ public class TableMeta {
 
 
         try {
-            BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir + "/" + className + "/fields/" + idFieldRaw[1] + ".fsj"));
+            BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + idFieldRaw[1] + ".fsj"));
             String[] rawAnnotations = reader.readLine().split(", ");
             idField = new SemiField(idFieldRaw[0], idFieldRaw[1], Arrays.stream(rawAnnotations).toList());
         } catch (FileNotFoundException e) {

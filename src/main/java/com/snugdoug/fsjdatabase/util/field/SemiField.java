@@ -57,8 +57,11 @@ public class SemiField {
         switch (fullClass) {
             case "int" -> type = "java.lang.Integer";
             case "float" -> type = "java.lang.Float";
+            case "boolean" -> type = "java.lang.Boolean";
             case "long" -> type = "java.lang.Long";
             case "byte" -> type = "java.lang.Byte";
+            case "short" -> type = "java.lang.Short";
+            case "char" -> type = "java.lang.Character";
             default -> type = fullClass;
         }
         this.name = name;

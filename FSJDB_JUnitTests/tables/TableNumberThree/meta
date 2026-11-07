@@ -1,0 +1,8 @@
+tableClass=TableNumberThree
+tableName=TableNumberThree
+freeTable=false
+autoIncrement=false
+columnFields=[java.lang.String firstName, java.lang.String lastName, java.lang.String email, int id]
+columnNames=[firstName, lastName, email, id]
+idField=int id
+getByColumnNames={firstName=java.lang.String firstName, lastName=java.lang.String lastName, id=int id, email=java.lang.String email}
