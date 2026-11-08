@@ -56,6 +56,7 @@ public class SemiField {
     public SemiField(String fullClass, String name, List<String> annotations) {
         switch (fullClass) {
             case "int" -> type = "java.lang.Integer";
+            case "double" -> type = "java.lang.Double";
             case "float" -> type = "java.lang.Float";
             case "boolean" -> type = "java.lang.Boolean";
             case "long" -> type = "java.lang.Long";

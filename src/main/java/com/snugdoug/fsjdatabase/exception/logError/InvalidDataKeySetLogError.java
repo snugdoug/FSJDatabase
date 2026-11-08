@@ -25,6 +25,9 @@ package com.snugdoug.fsjdatabase.exception.logError;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Error for invalid data set
+ */
 public class InvalidDataKeySetLogError extends LogError {
 
     /**

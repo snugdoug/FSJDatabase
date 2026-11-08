@@ -40,17 +40,17 @@ public class FSJDatabaseConfiguration {
     /**
      * The directory of the root
      */
-    public static Path directoryForDatabaseRoot;
+    protected static Path directoryForDatabaseRoot;
 
     /**
      * The root directory name
      */
-    public static String rootFSJDatabaseDirectoryName;
+    protected static String rootFSJDatabaseDirectoryName;
 
     /**
      * If debug is enabled
      */
-    public static boolean debugEnabled;
+    protected static boolean debugEnabled;
 
     /**
      * If the config changed directory name
@@ -69,10 +69,13 @@ public class FSJDatabaseConfiguration {
      *
      * @param rootFSJDatabaseDirectoryName allows for changing the root directory {@code name}
      * @return returns this with its current properties
+     *
+     * @deprecated This is deprecated since FSJDatabase 1.5.5<br>Please switch to using the chained methods such as .setDebug(), .setRootFSJDatabaseName(), and etc
      */
+    @Deprecated
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName) {
 
-        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
+        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replace(":","");
 
         FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
         didChangeFSJDatabaseRootDirectoryName = true;
@@ -89,7 +92,10 @@ public class FSJDatabaseConfiguration {
      * @param rootFSJDatabaseDirectoryName allows for changing the root directory {@code name}
      * @param directoryForDatabaseRoot allows for changing where the root directory {@code is}
      * @return returns this with its current properties
+     *
+     * @deprecated This is deprecated since FSJDatabase 1.5.5<br>Please switch to using the chained methods such as .setDebug(), .setRootFSJDatabaseName(), and etc
      */
+    @Deprecated
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot) {
 
         if(!directoryForDatabaseRoot.isAbsolute())
@@ -114,13 +120,17 @@ public class FSJDatabaseConfiguration {
      * @param directoryForDatabaseRoot allows for changing where the root directory {@code is}
      * @param debugEnabled primarily used in the {@link Logger} class to enabled debug messages.
      * @return returns this with its current properties
+     *
+     * @deprecated This is deprecated since FSJDatabase 1.5.5<br>Please switch to using the chained methods such as .setDebug(), .setRootFSJDatabaseName(), and etc
      */
+    @Deprecated
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot, boolean debugEnabled) {
 
-        if(!Path.of(rootFSJDatabaseDirectoryName).isAbsolute())
+        if(directoryForDatabaseRoot.isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
-        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
+        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replace(":","");
+
 
         FSJDatabaseConfiguration.directoryForDatabaseRoot = directoryForDatabaseRoot;
         FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
@@ -139,11 +149,15 @@ public class FSJDatabaseConfiguration {
      * @param rootFSJDatabaseDirectoryName allows for changing the root directory {@code name}
      * @param debugEnabled primarily used in the {@link Logger} class to enabled debug messages.
      * @return returns this with its current properties
+     *
+     * @deprecated This is deprecated since FSJDatabase 1.5.5<br>Please switch to using the chained methods such as .setDebug(), .setRootFSJDatabaseName(), and etc
      */
+    @Deprecated
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, boolean debugEnabled) {
 
 
-        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
+        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replace(":","");
+
 
         FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;
         FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName = true;
@@ -157,12 +171,50 @@ public class FSJDatabaseConfiguration {
      *
      * @param debugEnabled primarily used in the {@link Logger} class to enabled debug messages.
      * @return returns this with its current properties
+     * @deprecated This is deprecated since FSJDatabase 1.5.5<br>Please switch to using the chained methods such as .setDebug(), .setRootFSJDatabaseName(), and etc
      */
+    @Deprecated
     public FSJDatabaseConfiguration build(boolean debugEnabled) {
 
         FSJDatabaseConfiguration.debugEnabled = debugEnabled;
 
 
+        return this;
+    }
+
+    /**
+     * Enable/Disable debug
+     * @param debugEnabled whether to disable it or not
+     * @return the updated config
+     */
+    public FSJDatabaseConfiguration setDebug(boolean debugEnabled) {
+        FSJDatabaseConfiguration.debugEnabled = debugEnabled;
+        return this;
+    }
+
+    /**
+     * Sets the root directory name<br>
+     * This is how it parses it:<br>
+     * [rootDir]/[rootName]
+     * @param name the name
+     * @return the updated config
+     */
+    public FSJDatabaseConfiguration setRootFSJDatabaseDirectoryName(String name) {
+        didChangeFSJDatabaseRootDirectoryName = true;
+        rootFSJDatabaseDirectoryName = name;
+        return this;
+    }
+
+    /**
+     * Sets the directory for the root<br>
+     * This is how it parses it:<br>
+     * [rootDir]/[rootName]
+     * @param rootPath the path
+     * @return the updated config
+     */
+    public FSJDatabaseConfiguration setDirectoryForDatabaseRoot(Path rootPath) {
+        didChangeFSJDatabaseRootPath = true;
+        directoryForDatabaseRoot = rootPath;
         return this;
     }
 
@@ -199,5 +251,13 @@ public class FSJDatabaseConfiguration {
      */
     public static boolean isDidChangeFSJDatabaseRootPath() {
         return didChangeFSJDatabaseRootPath;
+    }
+
+    /**
+     * Gets if debug is enabled
+     * @return {@link #debugEnabled}
+     */
+    public static boolean isDebugEnabled() {
+        return debugEnabled;
     }
 }

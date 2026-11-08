@@ -104,6 +104,12 @@ public class FSJJsonWriter {
         }
     }
 
+    /**
+     * Checks if a table has a record
+     * @param id the id
+     * @param table the table
+     * @return whether it exists or not
+     */
     public static boolean tableContainsIdFile(int id, SemiClass table) {
         return new File(FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id + ".json").exists();
     }

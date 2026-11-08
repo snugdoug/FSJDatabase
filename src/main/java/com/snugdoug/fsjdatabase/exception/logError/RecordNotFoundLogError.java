@@ -24,6 +24,9 @@ package com.snugdoug.fsjdatabase.exception.logError;
 
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
+/**
+ * Error for a record not being found
+ */
 public class RecordNotFoundLogError extends LogError {
     /**
      * Send a custom error message

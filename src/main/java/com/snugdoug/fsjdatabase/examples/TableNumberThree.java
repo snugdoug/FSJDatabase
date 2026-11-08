@@ -25,10 +25,8 @@ package com.snugdoug.fsjdatabase.examples;
 import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
 
- @FreeTable
-/**
- * Example table, make sure to uncomment the comment above when copying this!
- */
+// @FreeTable
+/// Example table, make sure to uncomment the comment above when copying this!
 public class TableNumberThree {
 
     /**

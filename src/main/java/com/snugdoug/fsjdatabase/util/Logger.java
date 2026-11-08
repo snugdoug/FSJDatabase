@@ -27,20 +27,37 @@ import com.snugdoug.fsjdatabase.exception.logError.LogError;
 
 import java.util.List;
 
+/**
+ * Log's messages
+ */
 public class Logger {
-    // Reset escape code
+
+    /**
+     * Create a new instance
+     */
+    public Logger() {
+
+    }
+
+    /**
+     * Reset escape code
+     */
     public static final String RESET = "\u001B[0m";
 
-    // red escape code
+    /**
+     * Red escape code
+     */
     public static final String RED = "\u001B[31m";
 
-    // green escape code
+    /**
+     * Green escape code
+     */
     public static final String GREEN = "\u001B[32m";
 
-    // yellow escape code
+    /// yellow escape code
     public static final String YELLOW = "\033[93m";
 
-    // cyan escape code
+    /// cyan escape code
     public static final String CYAN = "\u001B[36m";
 
     /**
@@ -95,7 +112,7 @@ public class Logger {
      * @param <T> type param for allowing all types
      */
     public static <T> void debug(T text) {
-        if(FSJDatabaseConfiguration.debugEnabled)
+        if(FSJDatabaseConfiguration.isDebugEnabled())
             System.out.println(CYAN + translateText(text) + RESET);
     }
 

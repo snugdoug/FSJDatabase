@@ -76,11 +76,7 @@ public class SemiClass {
      * @return if this SemiClass is equal to {@code obj} using hashcode
      */
     public boolean equalsByHash(Object obj) {
-        if (this == obj)
-            return true;
-        if(!(obj instanceof SemiClass other))
-            return false;
-        return Objects.equals(this.hashCode(), other.hashCode());
+        return Objects.equals(this, obj);
     }
 
     /**

@@ -60,9 +60,8 @@ public class ExampleClass {
     public static void main(String[] args) {
         TableMeta meta = TableMeta.of(TableNumberOne.class);
 
-        // Configuring, MUST be before the init call so it auto-detects it.
-        // Characters such as /,\, etc., aren't allowed.
-        FSJDatabaseConfiguration fsjdbConfig = new FSJDatabaseConfiguration().build("FSJDB_TestingDB", true);
+        // For directory names, most are allowed, though :'s aren't.
+        FSJDatabaseConfiguration fsjdbConfig = new FSJDatabaseConfiguration().setRootFSJDatabaseDirectoryName("FSJDB_TestingDB").setDebug(true);
 
         // initialize fsjdb
         FSJDatabaseInitializer fsjdb = new FSJDatabaseInitializer(ExampleClass.class);

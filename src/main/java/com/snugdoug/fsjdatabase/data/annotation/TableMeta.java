@@ -22,11 +22,13 @@
 
 package com.snugdoug.fsjdatabase.data.annotation;
 
+import com.snugdoug.fsjdatabase.annotation.Column;
 import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
+import com.snugdoug.fsjdatabase.data.JDataManager;
 import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
@@ -122,7 +124,8 @@ public class TableMeta {
 
         Map<String, SemiField> getByColumnNames = new HashMap<>();
         Arrays.stream(clazz.getDeclaredFields()).forEach((field -> {
-            getByColumnNames.put(field.getName(), SemiField.of(field.getType(), field.getName(), convertFieldAnnotationsToList(field.getAnnotations())));
+            if(field.isAnnotationPresent(Column.class))
+                getByColumnNames.put(field.getName(), SemiField.of(field.getType(), field.getName(), convertFieldAnnotationsToList(field.getAnnotations())));
         }));
 
         Map<String, List<String>> getFieldAnnotationsByName = new HashMap<>();
@@ -391,8 +394,13 @@ public class TableMeta {
         return result;
     }
 
+    /**
+     * Gets the TableMeta using the path method, just made automatic
+     * @param table the table
+     * @return the TableMeta
+     */
     public static TableMeta of(SemiClass table) {
-        if(FSJDatabaseInitializer.getTables().contains(table)) {
+        if(FSJDatabaseInitializer.getTables().contains(table) | FSJDatabaseInitializer.getFreeTables().contains(table)) {
             return TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/meta"));
         } else {
             throw new TableNotFoundException(table);

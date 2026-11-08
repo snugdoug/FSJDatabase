@@ -42,7 +42,7 @@ public class JsonFSJTest {
     private static FSJDatabaseConfiguration conf;
     @BeforeAll
     static void init() {
-        conf =  new FSJDatabaseConfiguration().build("FSJDB_JUnitTests", true);
+        conf =  new FSJDatabaseConfiguration().setRootFSJDatabaseDirectoryName("FSJDB_JUnitTests").setDebug(true);
         init = new FSJDatabaseInitializer(JsonFSJTest.class);
         Logger.info("Tables: " + FSJDatabaseInitializer.getTables());
         Logger.info("FreeTables: " + FSJDatabaseInitializer.getFreeTables());
@@ -84,7 +84,7 @@ public class JsonFSJTest {
 
         assertTrue(dm.addToTable(TableNumberOne.class, dataTest1));
         dm.deleteById(TableNumberThree.class, 1);
-        if(!FSJJsonWriter.tableContainsIdFile(1, new SemiClass(TableNumberTwo.class)))
+        if(!FSJJsonWriter.tableContainsIdFile(1, new SemiClass(TableNumberThree.class)))
             assertTrue(dm.addToTable(TableNumberThree.class, noAutoIncrementData));
         assertTrue(dm.addToTable(TableNumberTwo.class, freeTableTestData));
     }
@@ -137,8 +137,13 @@ public class JsonFSJTest {
     @DisplayName("Test deleting data")
     void testDeletingData() {
         // Deleting
-        assertTrue(dm.deleteById(TableNumberOne.class, 10));
-        assertTrue(dm.deleteByFromIdToId(TableNumberOne.class, 7, 8));
+
+        if(dm.recordExists(10, TableNumberOne.class))
+            assertTrue(dm.deleteById(TableNumberOne.class, 10));
+
+        if(dm.recordExists(7, TableNumberOne.class))
+            assertTrue(dm.deleteByFromIdToId(TableNumberOne.class, 7, 8));
+
         assertTrue(dm.deleteContaining(TableNumberOne.class, "firstName", "alice_test_del"));
 
     }

@@ -32,7 +32,6 @@ import com.snugdoug.fsjdatabase.util.GetTypeOf;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.util.field.SemiField;
-import org.jline.utils.Log;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -53,8 +52,7 @@ public class JDataManager {
      * Before using anything in here, make sure FSJDatabase is initialized.
      */
     public JDataManager() {
-        if(!isFSJDatabaseInitialized)
-            throw new RuntimeException("FSJDatabase is not initialized, please initialize FSJDatabase before using JDataManager");
+
     }
 
     private static boolean isFSJDatabaseInitialized;
@@ -147,6 +145,16 @@ public class JDataManager {
          * @return if it was successful or not
          */
     public boolean deleteById(SemiClass table, int id) {
+
+        if(!FSJJsonWriter.tableContainsIdFile(id, table)) {
+            Logger.error(new RecordNotFoundLogError(table, id));
+            return false;
+        }
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+
+
         Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json");
         targetFileLocation = targetFileLocation.toAbsolutePath();
 
@@ -179,8 +187,15 @@ public class JDataManager {
      * @return if it was successful or not
      */
     public boolean deleteByFromIdToId(SemiClass table, int fromId, int toId) {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
 
         for(int id = fromId; id <= toId; id++) {
+            if(!FSJJsonWriter.tableContainsIdFile(id, table)) {
+                Logger.error(new RecordNotFoundLogError(table, id));
+                return false;
+            }
             Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json");
             targetFileLocation = targetFileLocation.toAbsolutePath();
 
@@ -224,6 +239,10 @@ public class JDataManager {
 
         if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
             value = Double.parseDouble(value.toString());
+        }
+
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
         }
 
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -281,6 +300,10 @@ public class JDataManager {
      */
     public boolean updateValueById(SemiClass table, int id, Object key, Object value) {
         if(tableExists(table)) {
+            if(!FSJJsonWriter.tableContainsIdFile(id, table)) {
+                Logger.error(new RecordNotFoundLogError(table, id));
+                return false;
+            }
 
             LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
             map.remove(key.toString());
@@ -320,8 +343,17 @@ public class JDataManager {
         String tableName = table.getSimpleName();
         String targetDir =  FSJDatabaseStructure.tablesDir + "/" + tableName;
 
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+
+        if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
+            value = Double.parseDouble(value.toString());
+        }
+
         try {
             try(Stream<Path> paths = Files.walk(Paths.get(targetDir))) {
+                Object finalValue = value;
                 paths
                         .filter(Files::isRegularFile).
                         forEach(file -> {
@@ -331,7 +363,7 @@ public class JDataManager {
                                     int id = Integer.parseInt(file.getFileName().toString().replace(".json", ""));
                                     LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
 
-                                    if (map.entrySet().contains(Map.entry(key, value))) {
+                                    if (map.entrySet().contains(Map.entry(key, finalValue))) {
                                         map.remove(key);
                                         map.put(key, newValue);
 
@@ -402,7 +434,9 @@ public class JDataManager {
             return false;
         }
 
-        int id = Integer.parseInt(data.get(getTableIdName(table)).toString());
+        int id = Integer.parseInt(
+                String.valueOf(Math.round(Double.parseDouble(
+                        data.get(getTableIdName(table)).toString()))));
 
         if(!(FSJJsonWriter.tableContainsIdFile(id, table))) {
             Logger.error(new RecordNotFoundLogError(table, id));
@@ -435,6 +469,7 @@ public class JDataManager {
      * @return if it was successful or not
      */
     public boolean updateContaining(SemiClass table, LinkedHashMap<Object, Object> searchData,  LinkedHashMap<Object, Object> data) {
+
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName();
 
 //        if(data.containsKey(getTableIdName(table)) &&
@@ -465,13 +500,16 @@ public class JDataManager {
                                 Logger.debug("Attempted to find matching data in " + table + " with id " + id);
                                 Logger.debug("Data: " + map);
 
-                                HashMap<Object, Object> dataFound = map;
-                                HashMap<Object, Object> searchTerm = searchData;
+                                HashMap<Object, Object> dataFound = new HashMap<>(map);
+                                HashMap<Object, Object> searchTerm = new HashMap<>(searchData);
 
                                 dataFound.remove(getTableIdName(table));
                                 searchTerm.remove(getTableIdName(table));
 
                                 if (dataFound.equals(searchTerm)) {
+                                    data.remove(getTableIdName(table));
+                                    data.put(getTableIdName(table), id);
+
                                     Logger.debug("Found match, update data: " + data + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
                                     Logger.debug("Id: " + id);
                                     Logger.debug("Table: " + table);
@@ -537,6 +575,10 @@ public class JDataManager {
      * @return returns found matches
      */
     public List<LinkedHashMap<Object, Object>> findByValueContaining(SemiClass table, Object key, Object value) {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+
         String tableName = table.getSimpleName();
         List<LinkedHashMap<Object, Object>> finalContent = new ArrayList<>();
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -590,6 +632,9 @@ public class JDataManager {
      * The value of Map.Entry is the value
      */
     public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(SemiClass table, String key) {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
         String tableName = table.getSimpleName();
         LinkedList<Map.Entry<Object, Object>> finalContent = new LinkedList<>();
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -636,6 +681,9 @@ public class JDataManager {
      * @return returns a set of columns
      */
     public Set<String> getTableColumns(SemiClass table, boolean autoIncrement) {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
         Set<String> columns;
         TableMeta tableMeta = TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/meta"));
 
@@ -658,6 +706,11 @@ public class JDataManager {
 
             dataToAdd.put(getTableIdName(table), id);
 
+            if(id == -314) {
+                Logger.error("A bug occurred as id increment is -1.");
+                return false;
+            }
+
             String targetFileLocation = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";
             FileManager.createFile(targetFileLocation);
             if(!FSJJsonWriter.tableContainsIdFile((id + 1), table))
@@ -679,9 +732,6 @@ public class JDataManager {
                 return false;
             }
 
-            String targetFileLocation = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";
-            FileManager.createFile(targetFileLocation);
-
             if(!FSJJsonWriter.tableContainsIdFile(id, table))
                 FSJJsonWriter.write(dataToAdd, table, id, false);
             else {
@@ -702,6 +752,10 @@ public class JDataManager {
      *
      */
     public String getTableIdName(SemiClass table) throws RuntimeException {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+
         String id = "";
 
         Path pathToMeta = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/meta");
@@ -718,6 +772,29 @@ public class JDataManager {
     }
 
     /**
+     * Helper method that just adds {@link FSJJsonWriter}'s method for seeing if a record exists into JDM
+     * @param id The id
+     * @param table The table
+     * @return if the record exists
+     */
+    public boolean recordExists(int id, Class<?> table) {
+        return recordExists(id, new SemiClass(table));
+    }
+
+    /**
+     * Helper method that just adds {@link FSJJsonWriter}'s method for seeing if a record exists into JDM
+     * @param id The id
+     * @param table The table
+     * @return if the record exists
+     */
+    public boolean recordExists(int id, SemiClass table) {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+        return FSJJsonWriter.tableContainsIdFile(id, table);
+    }
+
+    /**
      * Gets the autoIncrement list
      * @return {@link #autoIncrement}
      */
@@ -725,8 +802,12 @@ public class JDataManager {
         return autoIncrement;
     }
 
-    // Helper method to check if a table exists
-    private boolean tableExists(SemiClass table) {
+    /**
+     * Helper method to see if a table exists
+     * @param table the table
+     * @return whether it exists or not
+     */
+    protected boolean tableExists(SemiClass table) {
         return FSJDatabaseInitializer.tables.contains(table) | FSJDatabaseInitializer.freeTables.contains(table);
     }
 

@@ -107,6 +107,11 @@ public class ParserHashMap<K, V> implements Map<K, V> {
     @Override
     public V put(K key, V value) { size ++; return data.put(key, value); }
 
+    /**
+     * Puts values into the map, converting the unparsed data
+     * @param unparsed the unparsed data
+     * @return the value
+     */
     public V put(String unparsed) {
         if(unparsed == null) {
             throw new NullPointerException("The unparsed string is null");

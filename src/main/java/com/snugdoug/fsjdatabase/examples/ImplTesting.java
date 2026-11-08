@@ -27,6 +27,7 @@ import com.snugdoug.fsjdatabase.map.ParserHashMap;
 import com.snugdoug.fsjdatabase.map.ParserMap;
 import com.snugdoug.fsjdatabase.util.DefaultParserConverter;
 import com.snugdoug.fsjdatabase.util.Logger;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 /**
  * This class contains things related to testing custom implementations such as {@link ParserMap}
@@ -48,6 +49,7 @@ public class ImplTesting {
      */
     @SuppressWarnings("deprecation")
     public static void main(String[] args) {
+
 
         // Test LogError API
         Logger.error(new InvalidDataKeySetLogError("Test because thingy"));

@@ -26,6 +26,9 @@ import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 import javax.annotation.Nonnull;
 
+/**
+ * Exception for when an id field is not found.
+ */
 public class IdNotFoundException extends RuntimeException {
     /**
      * Default instance

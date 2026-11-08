@@ -53,7 +53,7 @@ public class JAutoIncrement {
      * @return the id
      */
     public static int get(SemiClass table) {
-        return getAll().getOrDefault(table.getSimpleName(), -1); // Intentional, if id is negative, a bug happened.
+        return getAll().getOrDefault(table.getSimpleName(), -314); // Intentional, if id is negative, a bug happened.
     }
 
     /**

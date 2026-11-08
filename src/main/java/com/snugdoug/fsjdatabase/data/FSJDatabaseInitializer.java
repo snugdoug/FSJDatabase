@@ -79,13 +79,13 @@ public class FSJDatabaseInitializer {
             }
 
             if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName && !FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath)
-                results = scanForAnnotatedClassesAndPackages(FSJDatabaseConfiguration.getDirectoryForDatabaseRoot());
+                results = scanForAnnotatedClassesAndPackages();
             else if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath && FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
-                results = scanForAnnotatedClassesAndPackages(Path.of(FSJDatabaseConfiguration.directoryForDatabaseRoot + "/" + FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName));
+                results = scanForAnnotatedClassesAndPackages();
             else if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath)
-                results = scanForAnnotatedClassesAndPackages(Path.of(FSJDatabaseConfiguration.directoryForDatabaseRoot + "/" + "FSJDatabase"));
+                results = scanForAnnotatedClassesAndPackages();
             else {
-                results = scanForAnnotatedClassesAndPackages(Path.of("FSJDatabase"));
+                results = scanForAnnotatedClassesAndPackages();
             }
             init = true;
             DataManager.dataManagerInit(results);
@@ -221,12 +221,18 @@ public class FSJDatabaseInitializer {
     }
 
     /**
-     * Much more complex scanning than other method, as the library doesn't have access to the classes.
+     * Much more complex scanning than other method, as the library doesn't have access to the classes.<br>
+     * This will not work on a brand new database, as it requires the meta to be written by the main method of initializing.<br>
+     * I physically cannot get it to run with just the directory as it needs the classes to write the meta and other fields.
      *
-     * @param directory the directory to scan
      * @return returns auto incremented tables
      */
-    protected List<SemiClass> scanForAnnotatedClassesAndPackages(Path directory) {
+    protected List<SemiClass> scanForAnnotatedClassesAndPackages() {
+
+        if(!(new File(FSJDatabaseStructure.dataDir + "/autoIncrement.json").exists())) {
+            Logger.error("Please run the Class initializing method first, as it will break without the proper meta and other files being written by it.");
+            Runtime.getRuntime().exit(1);
+        }
 
         FSJDatabaseStructure.create();
 

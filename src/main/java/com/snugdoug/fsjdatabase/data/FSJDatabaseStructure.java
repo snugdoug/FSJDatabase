@@ -81,7 +81,11 @@ public class FSJDatabaseStructure {
      */
     private static final String currentDir = System.getProperty("user.dir");
 
-    public static void create(Path rootFSJDatabaseDirectory) throws IOException {
+    /**
+     * Creates the structure
+     * @param rootFSJDatabaseDirectory The root directory
+     */
+    public static void create(Path rootFSJDatabaseDirectory) {
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
             createStructure(rootFSJDatabaseDirectory, FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
@@ -450,6 +454,11 @@ public class FSJDatabaseStructure {
         return !(failedCount.get() > 0);
     }
 
+    /**
+     * Checks if a table is in the autoIncrement.json file
+     * @param clazz The table
+     * @return If it was found in the auto increment file
+     */
     public static boolean isTableNotFoundInAutoIncrement(Class<?> clazz) {
         create();
         Map<String, Integer> results = JAutoIncrement.getAll();
