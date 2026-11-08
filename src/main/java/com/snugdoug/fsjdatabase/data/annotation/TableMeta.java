@@ -25,7 +25,9 @@ package com.snugdoug.fsjdatabase.data.annotation;
 import com.snugdoug.fsjdatabase.annotation.FreeTable;
 import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
+import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
+import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.util.field.SemiField;
@@ -387,6 +389,14 @@ public class TableMeta {
         }));
 
         return result;
+    }
+
+    public static TableMeta of(SemiClass table) {
+        if(FSJDatabaseInitializer.getTables().contains(table)) {
+            return TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/meta"));
+        } else {
+            throw new TableNotFoundException(table);
+        }
     }
 
 

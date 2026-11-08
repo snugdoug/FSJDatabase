@@ -67,7 +67,20 @@ public class SemiClass {
             return true;
         if(!(obj instanceof SemiClass other))
             return false;
-        return Objects.equals(className, other.className);
+        return Objects.equals(this.className, other.className);
+    }
+
+    /**
+     * Checks if the SemiClass is equal to another object using hashcode's
+     * @param obj the reference object with which to compare.
+     * @return if this SemiClass is equal to {@code obj} using hashcode
+     */
+    public boolean equalsByHash(Object obj) {
+        if (this == obj)
+            return true;
+        if(!(obj instanceof SemiClass other))
+            return false;
+        return Objects.equals(this.hashCode(), other.hashCode());
     }
 
     /**

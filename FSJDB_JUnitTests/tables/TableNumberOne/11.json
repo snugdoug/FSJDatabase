@@ -1,6 +1,5 @@
 {
   "firstName": "Alice",
   "lastName": "Smith",
-  "email": "alice@fakegmail.com",
-  "id": "1"
+  "email": "alice@fakegmail.com"
 }

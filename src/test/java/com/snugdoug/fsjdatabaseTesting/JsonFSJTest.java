@@ -24,7 +24,9 @@ package com.snugdoug.fsjdatabaseTesting;import com.snugdoug.fsjdatabase.data.FSJ
 import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
 import com.snugdoug.fsjdatabase.data.JDataManager;
+import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
 import com.snugdoug.fsjdatabase.util.Logger;
+import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
@@ -40,7 +42,7 @@ public class JsonFSJTest {
     private static FSJDatabaseConfiguration conf;
     @BeforeAll
     static void init() {
-        conf =  new FSJDatabaseConfiguration().build("FSJDB_TestingDB", true);
+        conf =  new FSJDatabaseConfiguration().build("FSJDB_JUnitTests", true);
         init = new FSJDatabaseInitializer(JsonFSJTest.class);
         Logger.info("Tables: " + FSJDatabaseInitializer.getTables());
         Logger.info("FreeTables: " + FSJDatabaseInitializer.getFreeTables());
@@ -78,11 +80,12 @@ public class JsonFSJTest {
         noAutoIncrementData.put("firstName", "Alice");
         noAutoIncrementData.put("lastName", "Smith");
         noAutoIncrementData.put("email", "alice@fakegmail.com");
-        noAutoIncrementData.put("id", "1"); // No 100% confirmation that it works with integers, feel free to give it a try though!
+        noAutoIncrementData.put("id", 1);
 
         assertTrue(dm.addToTable(TableNumberOne.class, dataTest1));
         dm.deleteById(TableNumberThree.class, 1);
-        assertTrue(dm.addToTable(TableNumberThree.class, noAutoIncrementData));
+        if(!FSJJsonWriter.tableContainsIdFile(1, new SemiClass(TableNumberTwo.class)))
+            assertTrue(dm.addToTable(TableNumberThree.class, noAutoIncrementData));
         assertTrue(dm.addToTable(TableNumberTwo.class, freeTableTestData));
     }
     @Test
@@ -91,6 +94,7 @@ public class JsonFSJTest {
         // value by id
         assertTrue(dm.updateValueById(TableNumberOne.class, 1, "firstName", "Jim"));
         assertTrue(dm.updateValueById(TableNumberThree.class, 0, "firstName", "Jimmy"));
+        assertTrue(dm.updateValueById(TableNumberOne.class, 0, "firstName", "Jimmy"));
 
         // value by containing
         assertTrue(dm.updateValueContaining(TableNumberOne.class, "firstName", "Jimmy", "NotAlice"));
@@ -99,14 +103,22 @@ public class JsonFSJTest {
         LinkedHashMap<Object, Object> updateData = new LinkedHashMap<>();
         updateData.put("firstName", "alice#02");
         updateData.put("lastName", "ecila");
-        updateData.put("emailName", "alice#02@fakegmail.com");
-        updateData.put("id", "4");
+        updateData.put("email", "alice#02@fakegmail.com");
+        updateData.put("id", 2);
+
 
         LinkedHashMap<Object, Object> updateData2 = new LinkedHashMap<>();
         updateData2.put("firstName", "alice#03");
         updateData2.put("lastName", "ecila");
-        updateData2.put("emailName", "alice#03@fakegmail.com");
-        updateData2.put("id", "5");
+        updateData2.put("email", "alice#03@fakegmail.com");
+        updateData2.put("id", 3);
+
+        LinkedHashMap<Object, Object> updateData3 = new LinkedHashMap<>();
+        updateData3.put("firstName", "alice_test_del");
+        updateData3.put("lastName", "ecila");
+        updateData3.put("email", "alice#02@fakegmail.com");
+        updateData3.put("id", 1);
+
 
         assertTrue(dm.updateById(TableNumberOne.class, updateData));
         assertTrue(dm.updateById(TableNumberOne.class, updateData2));
@@ -114,10 +126,10 @@ public class JsonFSJTest {
 
         // updating by containing (kinda equals though)
         LinkedHashMap<Object, Object> newUpdateData = new LinkedHashMap<>();
-        updateData.put("firstName", "Nah");
-        updateData.put("lastName", "RatherNotProvideThis");
-        updateData.put("emailName", "nottoday@fakegmail.com");
-        updateData.put("id", "5");
+        newUpdateData.put("firstName", "Nah");
+        newUpdateData.put("lastName", "RatherNotProvideThis");
+        newUpdateData.put("email", "nottoday@fakegmail.com");
+        newUpdateData.put("id", 3);
 
         assertTrue(dm.updateContaining(TableNumberOne.class, updateData2, newUpdateData));
     }
@@ -126,8 +138,8 @@ public class JsonFSJTest {
     void testDeletingData() {
         // Deleting
         assertTrue(dm.deleteById(TableNumberOne.class, 10));
-        assertTrue(dm.deleteByFromIdToId(TableNumberOne.class, 6, 8));
-        assertTrue(dm.deleteContaining(TableNumberOne.class, "firstName", "Nah"));
+        assertTrue(dm.deleteByFromIdToId(TableNumberOne.class, 7, 8));
+        assertTrue(dm.deleteContaining(TableNumberOne.class, "firstName", "alice_test_del"));
 
     }
     @Test

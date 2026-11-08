@@ -47,15 +47,19 @@ public class FSJDatabaseInitializer {
      */
     @SuppressWarnings("deprecation")
     public FSJDatabaseInitializer(Class<?> mainClass) {
-        if(!init) {
-            List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
-
-            init = true;
-            DataManager.dataManagerInit(results);
-            JDataManager.jDataManagerInit(results);
-        } else {
-            Logger.warn("FSJDatabaseInitializer was called twice! Skipping...");
+        if(init) {
+            Logger.warn("Calling initializer twice may allow for hot switching databases, though unknown bugs might appear.\nUse at your own risk.");
+            init = false;
+            tables = new ArrayList<>();
+            freeTables = new ArrayList<>();
         }
+
+
+        List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
+
+        init = true;
+        DataManager.dataManagerInit(results);
+        JDataManager.jDataManagerInit(results);
     }
 
     /**
@@ -67,8 +71,19 @@ public class FSJDatabaseInitializer {
     public FSJDatabaseInitializer(boolean useDirectory) {
         List<SemiClass> results;
         if(useDirectory) {
-            if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
+            if(init) {
+                Logger.warn("Calling initializer twice may allow for hot switching databases, though unknown bugs might appear.\nUse at your own risk.");
+                init = false;
+                tables = new ArrayList<>();
+                freeTables = new ArrayList<>();
+            }
+
+            if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName && !FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath)
                 results = scanForAnnotatedClassesAndPackages(FSJDatabaseConfiguration.getDirectoryForDatabaseRoot());
+            else if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath && FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
+                results = scanForAnnotatedClassesAndPackages(Path.of(FSJDatabaseConfiguration.directoryForDatabaseRoot + "/" + FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName));
+            else if (FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath)
+                results = scanForAnnotatedClassesAndPackages(Path.of(FSJDatabaseConfiguration.directoryForDatabaseRoot + "/" + "FSJDatabase"));
             else {
                 results = scanForAnnotatedClassesAndPackages(Path.of("FSJDatabase"));
             }
@@ -181,8 +196,6 @@ public class FSJDatabaseInitializer {
                     Logger.debug("Found table with autoIncrement: " + field.getDeclaringClass().getSimpleName());
                     Id idDetail = field.getAnnotation(Id.class);
                     hasAutoIncrement = idDetail.autoIncrement();
-                } else {
-                    throw new IdNotFoundException(clazz);
                 }
 
                 if (field.isAnnotationPresent(Column.class)) {

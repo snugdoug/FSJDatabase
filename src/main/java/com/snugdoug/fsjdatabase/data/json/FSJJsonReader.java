@@ -69,10 +69,8 @@ public class FSJJsonReader {
             return result;
         } catch (IOException e) {
             Logger.error("Failed to read json file.\n" + e);
+            return new LinkedHashMap<>();
         }
-
-
-        return new LinkedHashMap<>();
     }
 
 }

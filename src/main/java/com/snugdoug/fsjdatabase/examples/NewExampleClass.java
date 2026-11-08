@@ -55,11 +55,13 @@ public class NewExampleClass {
      */
     public static void main(String[] args) {
         FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration();
-        conf.build("FSJDB_TestingDB", true);
+//        conf.build("FSJDB_TestingDB", true);
 
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(NewExampleClass.class);
 
         JDataManager dm = new JDataManager();
+
+        Runtime.getRuntime().exit(1);
 
         LinkedHashMap<Object, Object> dataTest1 = new LinkedHashMap<>();
         dataTest1.put("firstName", "Alice");

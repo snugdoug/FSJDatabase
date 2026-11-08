@@ -102,6 +102,9 @@ public class FSJDatabaseStructure {
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath && FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
             createStructure(FSJDatabaseConfiguration.directoryForDatabaseRoot, FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
+        if(!FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath && !FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
+            createStructure(Path.of(currentDir), "FSJDatabase");
+
 
     }
 
@@ -242,7 +245,7 @@ public class FSJDatabaseStructure {
     public static boolean isTableNotInDatabase(Class<?> clazz) {
         create();
 
-        File hypotheticTableDir = new File(tablesDir + "/" + clazz.getName());
+        File hypotheticTableDir = new File(tablesDir + "/" + clazz.getSimpleName());
         return !hypotheticTableDir.exists();
     }
 
@@ -381,6 +384,9 @@ public class FSJDatabaseStructure {
                                         if (type.equals(Character.class)) {
                                             toConvert = toConvert.toString().toCharArray()[0];
                                         }
+                                        if (type.equals(Long.class)) {
+                                            toConvert = Long.parseLong(toConvert.toString());
+                                        }
                                         result.put(field.getName(), toConvert);
                                         Logger.debug(tableMap.get(path));
                                     }
@@ -441,14 +447,14 @@ public class FSJDatabaseStructure {
             }
         });
         Logger.info("Updated " + updatedCount + " files, failed to update " + failedCount.get() + " files.");
-        return true;
+        return !(failedCount.get() > 0);
     }
 
     public static boolean isTableNotFoundInAutoIncrement(Class<?> clazz) {
         create();
         Map<String, Integer> results = JAutoIncrement.getAll();
 
-        return results.containsKey(clazz.getSimpleName());
+        return !results.containsKey(clazz.getSimpleName());
     }
 
     /**

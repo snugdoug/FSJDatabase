@@ -95,7 +95,7 @@ public class FSJDatabaseConfiguration {
         if(!directoryForDatabaseRoot.isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
-        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replaceAll("[-+.^:,]","");
+        rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replace(":","");
 
         FSJDatabaseConfiguration.directoryForDatabaseRoot = directoryForDatabaseRoot;
         FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName;

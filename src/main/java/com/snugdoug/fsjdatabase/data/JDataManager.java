@@ -26,10 +26,13 @@ import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonReader;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
 import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
+import com.snugdoug.fsjdatabase.exception.logError.InvalidDataKeySetLogError;
+import com.snugdoug.fsjdatabase.exception.logError.RecordNotFoundLogError;
 import com.snugdoug.fsjdatabase.util.GetTypeOf;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.util.field.SemiField;
+import org.jline.utils.Log;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -50,7 +53,8 @@ public class JDataManager {
      * Before using anything in here, make sure FSJDatabase is initialized.
      */
     public JDataManager() {
-
+        if(!isFSJDatabaseInitialized)
+            throw new RuntimeException("FSJDatabase is not initialized, please initialize FSJDatabase before using JDataManager");
     }
 
     private static boolean isFSJDatabaseInitialized;
@@ -81,8 +85,12 @@ public class JDataManager {
     public boolean addToTable(SemiClass table, LinkedHashMap<Object, Object> dataToAdd) {
 
         // check for flags of invalid data/inproper initialization
-        if(!isFSJDatabaseInitialized)
-            throw new RuntimeException("FSJDatabase is not initialized");
+
+        Logger.debug("Adding data, tables: " + FSJDatabaseInitializer.tables);
+        Logger.debug("Adding data, free tables: " + FSJDatabaseInitializer.freeTables);
+
+        Logger.debug(FSJDatabaseInitializer.getTables().contains(table));
+        Logger.debug("Table: " + table);
 
         if(!FSJDatabaseInitializer.tables.contains(table) && !FSJDatabaseInitializer.freeTables.contains(table))
             throw new TableNotFoundException(table);
@@ -105,7 +113,7 @@ public class JDataManager {
 
         if(!dataToAdd.keySet().equals(tableColumns)) {
             if(!FSJDatabaseInitializer.freeTables.contains(table)) {
-                Logger.error("dataToAdd's keys does not match the tables columns with data set: \n" + dataToAdd);
+                Logger.error(new InvalidDataKeySetLogError(dataToAdd, getTableColumns(table, TableMeta.of(table).isAutoIncrement())));
                 return false;
             }
         }
@@ -215,7 +223,7 @@ public class JDataManager {
         String tableName = table.getSimpleName();
 
         if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
-            value = Float.parseFloat(value.toString());
+            value = Double.parseDouble(value.toString());
         }
 
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -368,14 +376,39 @@ public class JDataManager {
          */
     public boolean updateById(SemiClass table, LinkedHashMap<Object, Object> data) throws RuntimeException {
 
-        String idName = getTableIdName(table);
+        if(!FSJDatabaseInitializer.tables.contains(table) && !FSJDatabaseInitializer.freeTables.contains(table)) {
+            throw new TableNotFoundException(table);
+        }
+
+        TableMeta meta = TableMeta.of(table);
+
+        Set<String> requiredKeySet = getTableColumns(table, meta.isAutoIncrement());
+
+        boolean added = false;
+        if(meta.isAutoIncrement())
+            added = requiredKeySet.add(getTableIdName(table));
+
+        Logger.debug("Added id field: " + added);
+        Logger.debug("Required set: " + requiredKeySet);
+
+        if(!data.keySet().equals(requiredKeySet)) {
+            Logger.error(new InvalidDataKeySetLogError(data, requiredKeySet));
+            return false;
+        }
+
 
         if(!data.containsKey(getTableIdName(table))) {
             Logger.error("Data does not contain id field! Dataset: \n" + data);
             return false;
         }
 
-        int id = Integer.parseInt(String.valueOf(data.get(getTableIdName(table))));
+        int id = Integer.parseInt(data.get(getTableIdName(table)).toString());
+
+        if(!(FSJJsonWriter.tableContainsIdFile(id, table))) {
+            Logger.error(new RecordNotFoundLogError(table, id));
+            Logger.debug("Result: " + !FSJJsonWriter.tableContainsIdFile(id, table));
+            return false;
+        }
 
         FSJJsonWriter.write(data, table, id, false);
         return true;
@@ -399,38 +432,58 @@ public class JDataManager {
      * @param table the table to change data with
      * @param searchData the search term for finding what to replace
      * @param data the replacement data after the data matching searchData is found
-     * @throws RuntimeException throws RuntimeException mostly from invalid data
      * @return if it was successful or not
      */
-    public boolean updateContaining(SemiClass table, LinkedHashMap<Object, Object> searchData,  LinkedHashMap<Object, Object> data) throws RuntimeException {
-        String tableName = table.getSimpleName();
-        String targetDir =  FSJDatabaseStructure.tablesDir + "/" + tableName;
+    public boolean updateContaining(SemiClass table, LinkedHashMap<Object, Object> searchData,  LinkedHashMap<Object, Object> data) {
+        String targetDir = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName();
 
-        if(data.containsKey(getTableIdName(table)) &&
-                TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + "meta")).isAutoIncrement()) {
-            Logger.error("Data needs to not contain id field for proper identification!");
+//        if(data.containsKey(getTableIdName(table)) &&
+//                TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + "meta")).isAutoIncrement()) {
+//            Logger.error("Data needs to not contain id field for proper identification!");
+//            return false;
+//        }
+
+        Set<String> requiredKeySet = getTableColumns(table, TableMeta.of(table).isAutoIncrement());
+
+        if(TableMeta.of(table).isAutoIncrement())
+            requiredKeySet.add(getTableIdName(table));
+
+        if(!data.keySet().equals(requiredKeySet)) {
+            Logger.error(new InvalidDataKeySetLogError(data, requiredKeySet));
             return false;
         }
 
-        try {
-            try(Stream<Path> paths = Files.walk(Paths.get(targetDir))) {
+        Logger.debug("Updating containing");
+
+            try(Stream<Path> paths = Files.walk(Path.of(targetDir))) {
                 paths
-                        .filter(Files::isRegularFile).
-                        forEach(file -> {
-                            if (file.getFileName().toString().contains(".json")) {
+                        .filter(Files::isRegularFile)
+                        .forEach(file -> {
+                            if (file.getFileName().toString().endsWith(".json")) {
                                 int id = Integer.parseInt(file.getFileName().toString().replace(".json", ""));
                                 LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
+                                Logger.debug("Attempted to find matching data in " + table + " with id " + id);
+                                Logger.debug("Data: " + map);
 
-                                if (searchData.equals(map)) {
+                                HashMap<Object, Object> dataFound = map;
+                                HashMap<Object, Object> searchTerm = searchData;
+
+                                dataFound.remove(getTableIdName(table));
+                                searchTerm.remove(getTableIdName(table));
+
+                                if (dataFound.equals(searchTerm)) {
+                                    Logger.debug("Found match, update data: " + data + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
+                                    Logger.debug("Id: " + id);
+                                    Logger.debug("Table: " + table);
                                     FSJJsonWriter.write(data, table, id, false);
                                 }
                             }
 
                         });
+            } catch (IOException e) {
+                Logger.error("Failed to walk through directory\n" + e);
+                return false;
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to walk through the files in '" + targetDir + "'\n" + e);
-        }
         return true;
     }
 
@@ -489,7 +542,7 @@ public class JDataManager {
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
 
         if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
-            value = Float.parseFloat(value.toString());
+            value = Double.parseDouble(value.toString());
         }
 
         try {
