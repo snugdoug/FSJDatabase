@@ -24,6 +24,7 @@ package com.snugdoug.fsjdatabase.cli;
 
 import com.google.common.reflect.TypeToken;
 import com.snugdoug.fsjdatabase.util.GetTypeOf;
+import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.ParserConverter;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.data.JDataManager;
@@ -118,5 +119,37 @@ public class CommandParser {
             }
         }
         return true;
+    }
+
+    /**
+     * Converts a number syntax from $num[{@literal <NUM>}] to a normal number
+     *
+     * @param numSyntax The syntax to parse
+     * @return The results, first value is result, second value is if it succeeded
+     */
+    public static ArrayList<Double> parseToDouble(String numSyntax) {
+        if(numSyntax.startsWith("$num[") && numSyntax.endsWith("]")) {
+            numSyntax = numSyntax.replace("$num[","");
+            numSyntax = numSyntax.replace("]","");
+
+            try {
+                double result = Double.parseDouble(numSyntax);
+                return new ArrayList<>(List.of(result, 1.0));
+            } catch (NumberFormatException e) {
+                return new ArrayList<>(List.of(0.0, 0.0));
+            }
+        } else {
+            return new ArrayList<>(List.of(0.0, 0.0));
+        }
+    }
+
+    /**
+     * Verify's if the string is in num syntax
+     * @param numSyntax the syntax
+     * @return if it is proper num syntax
+     */
+    public static boolean verifyIsNum(String numSyntax) {
+        Logger.debug(numSyntax.startsWith("$num[") && numSyntax.endsWith("]"));
+        return numSyntax.startsWith("$num[") && numSyntax.endsWith("]");
     }
 }

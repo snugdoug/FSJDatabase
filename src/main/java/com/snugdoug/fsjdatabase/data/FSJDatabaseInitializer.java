@@ -228,13 +228,15 @@ public class FSJDatabaseInitializer {
      * @return returns auto incremented tables
      */
     protected List<SemiClass> scanForAnnotatedClassesAndPackages() {
+        FSJDatabaseStructure.create();
+
 
         if(!(new File(FSJDatabaseStructure.dataDir + "/autoIncrement.json").exists())) {
             Logger.error("Please run the Class initializing method first, as it will break without the proper meta and other files being written by it.");
             Runtime.getRuntime().exit(1);
         }
 
-        FSJDatabaseStructure.create();
+
 
         List<SemiClass> autoIncrement = new ArrayList<>();
         try {

@@ -49,6 +49,7 @@ public class DefaultParserConverter implements ParserConverter {
         registry.put(Byte.class, Byte::parseByte);
         registry.put(Short.class, Short::parseShort);
         registry.put(SemiClass.class, SemiClass::nameOf);
+        registry.put(Object.class, Object::toString);
     }
 
 

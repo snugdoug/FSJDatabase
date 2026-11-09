@@ -27,6 +27,7 @@ import com.snugdoug.fsjdatabase.data.json.FSJJsonReader;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
 import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
 import com.snugdoug.fsjdatabase.exception.logError.InvalidDataKeySetLogError;
+import com.snugdoug.fsjdatabase.exception.logError.NumberFormatLogError;
 import com.snugdoug.fsjdatabase.exception.logError.RecordNotFoundLogError;
 import com.snugdoug.fsjdatabase.util.GetTypeOf;
 import com.snugdoug.fsjdatabase.util.Logger;
@@ -146,13 +147,15 @@ public class JDataManager {
          */
     public boolean deleteById(SemiClass table, int id) {
 
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+
         if(!FSJJsonWriter.tableContainsIdFile(id, table)) {
             Logger.error(new RecordNotFoundLogError(table, id));
             return false;
         }
-        if(!tableExists(table)) {
-            throw new TableNotFoundException(table);
-        }
+
 
 
         Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json");
@@ -191,10 +194,12 @@ public class JDataManager {
             throw new TableNotFoundException(table);
         }
 
+        boolean hadFailed = false;
+
         for(int id = fromId; id <= toId; id++) {
             if(!FSJJsonWriter.tableContainsIdFile(id, table)) {
                 Logger.error(new RecordNotFoundLogError(table, id));
-                return false;
+                hadFailed = true;
             }
             Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json");
             targetFileLocation = targetFileLocation.toAbsolutePath();
@@ -205,7 +210,9 @@ public class JDataManager {
                 FileManager.deleteFsjdbFile(targetFileLocation.toString());
             }
         }
-        return true;
+
+        // inverts so if its false it will be true (success) or if it's true it will be false (failure)
+        return !hadFailed;
     }
 
     /**
@@ -423,7 +430,7 @@ public class JDataManager {
         Logger.debug("Added id field: " + added);
         Logger.debug("Required set: " + requiredKeySet);
 
-        if(!data.keySet().equals(requiredKeySet)) {
+        if(!data.keySet().equals(requiredKeySet) && !FSJDatabaseInitializer.getFreeTables().contains(table)) {
             Logger.error(new InvalidDataKeySetLogError(data, requiredKeySet));
             return false;
         }
@@ -434,10 +441,11 @@ public class JDataManager {
             return false;
         }
 
-        int id = Integer.parseInt(
-                String.valueOf(Math.round(Double.parseDouble(
-                        data.get(getTableIdName(table)).toString()))));
+        if(!(Double.parseDouble(data.get(getTableIdName(table)).toString())%1 == 0)) {
+            Logger.error(new NumberFormatLogError(Double.parseDouble(data.get(getTableIdName(table)).toString()), "The id in updateById data must be a whole number!"));
+        }
 
+        int id = Integer.parseInt(String.valueOf(data.get(getTableIdName(table))).replaceAll("\\..*$",""));
         if(!(FSJJsonWriter.tableContainsIdFile(id, table))) {
             Logger.error(new RecordNotFoundLogError(table, id));
             Logger.debug("Result: " + !FSJJsonWriter.tableContainsIdFile(id, table));
@@ -507,13 +515,14 @@ public class JDataManager {
                                 searchTerm.remove(getTableIdName(table));
 
                                 if (dataFound.equals(searchTerm)) {
-                                    data.remove(getTableIdName(table));
-                                    data.put(getTableIdName(table), id);
+                                    LinkedHashMap<Object, Object> newData = new LinkedHashMap<>(data);
+                                    newData.remove(getTableIdName(table));
+                                    newData.put(getTableIdName(table), id);
 
-                                    Logger.debug("Found match, update data: " + data + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
+                                    Logger.debug("Found match, update data: " + newData + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
                                     Logger.debug("Id: " + id);
                                     Logger.debug("Table: " + table);
-                                    FSJJsonWriter.write(data, table, id, false);
+                                    FSJJsonWriter.write(newData, table, id, false);
                                 }
                             }
 
@@ -674,7 +683,7 @@ public class JDataManager {
     }
 
     /**
-     * Gets the table columns of a class, this is needed to detect if a data map given is invalid to the columns in {@link #addToTable(SemiClass, LinkedHashMap)}.
+     * Gets the table columns of a class, this is needed to detect if a data map given is invalid to the columns in {@link #addToTable(SemiClass, LinkedHashMap)} and other methods.
      *
      * @param table the table to get the columns of
      * @param autoIncrement when not using auto incrementing it will add the @id annotation name to match the given map data if it's not already invalid
@@ -704,17 +713,20 @@ public class JDataManager {
         if(autoIncrement) {
             int id = JAutoIncrement.get(table);
 
-            dataToAdd.put(getTableIdName(table), id);
-
             if(id == -314) {
-                Logger.error("A bug occurred as id increment is -1.");
+                Logger.error("A bug occurred as id increment is -314.");
                 return false;
             }
+
+            LinkedHashMap<Object, Object> finalData = new LinkedHashMap<>(dataToAdd);
+            finalData.put(getTableIdName(table), id);
+
+
 
             String targetFileLocation = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";
             FileManager.createFile(targetFileLocation);
             if(!FSJJsonWriter.tableContainsIdFile((id + 1), table))
-                FSJJsonWriter.write(dataToAdd, table, id, true);
+                FSJJsonWriter.write(finalData, table, id, true);
             else {
                 Logger.error("Data already exists in the database with the id of " + id + "!");
                 return false;

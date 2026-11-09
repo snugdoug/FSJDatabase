@@ -33,14 +33,10 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
-// TODO: Make this a separate project at some point
+// TODO: Make this a separate project at some point and also fix this to work with the new JSON system
 
 /**
  * The shell for FSJDatabase
@@ -92,6 +88,7 @@ public class FSJDatabaseShell {
         }
 
         FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration().build(pathToDBFile.toFile().getName(), pathToDBFile.getParent());
+
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(true);
 
         JDataManager data = new JDataManager();
@@ -141,7 +138,9 @@ public class FSJDatabaseShell {
 
             else if (line.equals("help")) {
                 term.writer().println("FSJDatabase Shell Command List");
+                term.writer().println("To represent a number (double) value wrap the number in $num[<NUM>]");
                 term.writer().println("help - shows this");
+                term.writer().println("test-num <num-syntax>");
                 term.writer().println("quit|exit - exits shell");
                 term.writer().println("findById <table> <id> - gets data by id");
                 term.writer().println("findByValueContaining <table> <key> <value> - gets data by id");
@@ -196,11 +195,18 @@ public class FSJDatabaseShell {
 
                     if(validTableMetaPath(tableMetaPath)) {
 
-                    TableMeta meta = TableMeta.of(tableMetaPath);
+                        Logger.debug("Tests");
 
-                    List<LinkedHashMap<Object, Object>> dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
-                    // You know I don't think we need that after I just examined my code...
-//                    dataByValueContaining.sort(new IdSortedComparator());
+                    TableMeta meta = TableMeta.of(tableMetaPath);
+                    List<LinkedHashMap<Object, Object>> dataByValueContaining;
+                    if(CommandParser.verifyIsNum(cmdArray[3]))
+                         dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], CommandParser.parseToDouble(cmdArray[3]));
+                    else
+                        dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
+
+
+                        // You know I don't think we need that after I just examined my code...
+                        //                    dataByValueContaining.sort(new IdSortedComparator());
                     dataByValueContaining.forEach((hashmap) -> {
 
 
@@ -217,9 +223,24 @@ public class FSJDatabaseShell {
                         term.writer().println("Failed to find Table Directory, Meta File, or Id File.");
                     }
                 }
-            } else {
+
+            } else if(cmdArray[0].equals("test-num")) {
+                if(CommandParser.verifyIsNum(cmdArray[1])) {
+                    ArrayList<Double> results = CommandParser.parseToDouble(cmdArray[1]);
+                    if(results.getLast() == 0.0d)
+                        term.writer().println("Invalid syntax.");
+                    else
+                        term.writer().println(results.getFirst());
+                } else {
+                    term.writer().println("Invalid syntax.");
+                }
+            }
+
+            else {
                 term.writer().println("Invalid Command '" + line + "', use the command 'help' to see available commands");
             }
+
+
 
             // TODO: add the rest of the methods
 
