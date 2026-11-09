@@ -1,5 +1,5 @@
 # FSJDatabase
-A File-based database for linux!
-No promises for if it works with windows.
+A File-based database for linux!<br>
+Developed on linux, due to this, it is unknown whether it works well with windows.
 
 Installation and about FSJDatabase is in the [Wiki](https://github.com/snugdoug/FSJDatabase/wiki)!
