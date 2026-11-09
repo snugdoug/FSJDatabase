@@ -74,8 +74,8 @@ public class FSJJsonWriter {
             writer.write(jsonString);
             writer.flush();
         } catch (IOException e) {
-           FileManager.deleteFsjdbFile(path);
-           Logger.error("Failed to write record, deleting blank record and not incrementing.");
+//           FileManager.deleteFsjdbFile(path);
+           Logger.error("Failed to write record, not incrementing.");
            hadError = true;
         }
 
