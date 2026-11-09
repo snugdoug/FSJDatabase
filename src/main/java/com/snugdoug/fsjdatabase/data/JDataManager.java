@@ -244,6 +244,11 @@ public class JDataManager {
     public boolean deleteContaining(SemiClass table, Object key, Object value) {
         String tableName = table.getSimpleName();
 
+        if(value == null) {
+            Logger.error("Null value, make sure you aren't passing null values into JDM!");
+            return false;
+        }
+
         if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
             value = Double.parseDouble(value.toString());
         }
@@ -251,6 +256,7 @@ public class JDataManager {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
         }
+
 
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
 
@@ -352,6 +358,11 @@ public class JDataManager {
 
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
+        }
+
+        if(value == null) {
+            Logger.error("Null value, make sure you aren't passing null values into JDM!");
+            return false;
         }
 
         if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
@@ -588,6 +599,11 @@ public class JDataManager {
             throw new TableNotFoundException(table);
         }
 
+        if(value == null) {
+            Logger.error("Null value, make sure you aren't passing null values into JDM!");
+            return new ArrayList<>();
+        }
+
         String tableName = table.getSimpleName();
         List<LinkedHashMap<Object, Object>> finalContent = new ArrayList<>();
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -718,19 +734,17 @@ public class JDataManager {
                 return false;
             }
 
+
+
+            while (FSJJsonWriter.tableContainsIdFile(id, table)) {
+                Logger.warn("Auto-increment counter for " + table + " was behind: id " + id + " is already used, trying " + (id + 1));
+                id++;
+            }
             LinkedHashMap<Object, Object> finalData = new LinkedHashMap<>(dataToAdd);
             finalData.put(getTableIdName(table), id);
 
-
-
-            String targetFileLocation = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json";
-            FileManager.createFile(targetFileLocation);
-            if(!FSJJsonWriter.tableContainsIdFile((id + 1), table))
-                FSJJsonWriter.write(finalData, table, id, true);
-            else {
-                Logger.error("Data already exists in the database with the id of " + id + "!");
-                return false;
-            }
+            FSJJsonWriter.write(finalData, table, id, false);
+            JAutoIncrement.set(table, id + 1);
 
         }
 

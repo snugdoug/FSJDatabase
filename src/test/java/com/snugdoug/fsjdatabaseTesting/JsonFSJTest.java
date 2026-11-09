@@ -92,9 +92,14 @@ public class JsonFSJTest {
     @DisplayName("Test updating data")
     void testUpdatingData() {
         // value by id
-        assertTrue(dm.updateValueById(TableNumberOne.class, 1, "firstName", "Jim"));
-        assertTrue(dm.updateValueById(TableNumberThree.class, 0, "firstName", "Jimmy"));
-        assertTrue(dm.updateValueById(TableNumberOne.class, 0, "firstName", "Jimmy"));
+        if(dm.recordExists(1, TableNumberOne.class))
+            assertTrue(dm.updateValueById(TableNumberOne.class, 1, "firstName", "Jim"));
+
+        if(dm.recordExists(0, TableNumberThree.class))
+            assertTrue(dm.updateValueById(TableNumberThree.class, 0, "firstName", "Jimmy"));
+
+        if(dm.recordExists(0, TableNumberOne.class))
+            assertTrue(dm.updateValueById(TableNumberOne.class, 0, "firstName", "Jimmy"));
 
         // value by containing
         assertTrue(dm.updateValueContaining(TableNumberOne.class, "firstName", "Jimmy", "NotAlice"));

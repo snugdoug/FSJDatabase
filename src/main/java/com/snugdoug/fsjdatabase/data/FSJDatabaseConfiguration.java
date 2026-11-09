@@ -98,7 +98,7 @@ public class FSJDatabaseConfiguration {
     @Deprecated
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot) {
 
-        if(directoryForDatabaseRoot.isAbsolute())
+        if(!directoryForDatabaseRoot.isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
         rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replace(":","");
@@ -126,7 +126,7 @@ public class FSJDatabaseConfiguration {
     @Deprecated
     public FSJDatabaseConfiguration build(String rootFSJDatabaseDirectoryName, Path directoryForDatabaseRoot, boolean debugEnabled) {
 
-        if(directoryForDatabaseRoot.isAbsolute())
+        if(!directoryForDatabaseRoot.isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
         rootFSJDatabaseDirectoryName = rootFSJDatabaseDirectoryName.replace(":","");
@@ -202,7 +202,6 @@ public class FSJDatabaseConfiguration {
     public FSJDatabaseConfiguration setRootFSJDatabaseDirectoryName(String name) {
         rootFSJDatabaseDirectoryName = name.replace(":","");
         didChangeFSJDatabaseRootDirectoryName = true;
-        rootFSJDatabaseDirectoryName = name;
         return this;
     }
 
@@ -214,7 +213,7 @@ public class FSJDatabaseConfiguration {
      * @return the updated config
      */
     public FSJDatabaseConfiguration setDirectoryForDatabaseRoot(Path rootPath) {
-        if(rootPath.isAbsolute())
+        if(!rootPath.isAbsolute())
             throw new RuntimeException("Root path must be absolute!");
 
         didChangeFSJDatabaseRootPath = true;

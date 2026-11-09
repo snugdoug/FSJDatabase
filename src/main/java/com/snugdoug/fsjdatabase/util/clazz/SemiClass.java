@@ -68,6 +68,7 @@ public class SemiClass {
         if(!(obj instanceof SemiClass other))
             return false;
         return Objects.equals(this.className, other.className);
+
     }
 
     /**
@@ -76,7 +77,7 @@ public class SemiClass {
      * @return if this SemiClass is equal to {@code obj} using hashcode
      */
     public boolean equalsByHash(Object obj) {
-        return Objects.equals(this, obj);
+        return Objects.equals(Objects.hashCode(obj), Objects.hashCode(this));
     }
 
     /**
@@ -110,6 +111,6 @@ public class SemiClass {
      */
     @Override
     public int hashCode() {
-        return super.hashCode();
+        return Objects.hashCode(className);
     }
 }

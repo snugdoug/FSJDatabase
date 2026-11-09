@@ -110,4 +110,30 @@ public class JAutoIncrement {
         Logger.warn("Returning empty LinkedHashMap, as autoIncrement.json could not be read!");
         return new LinkedHashMap<>();
     }
+
+    /**
+     * Force sets the id to something new
+     * @param table the table
+     * @param id the id
+     */
+    protected static void set(SemiClass table, int id) {
+        String path = FSJDatabaseStructure.dataDir + "/autoIncrement.json";
+        try {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            Map<String, Integer> resultMap = getAll();
+
+            resultMap.remove(table.getSimpleName());
+            resultMap.put(table.getSimpleName(), id);
+            try(BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+
+                Logger.debug("Rewriting to data/autoincrement.fsj: " + gson.toJson(resultMap));
+
+                writer.append(gson.toJson(resultMap));
+                writer.flush();
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

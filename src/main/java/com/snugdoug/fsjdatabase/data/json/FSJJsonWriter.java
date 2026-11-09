@@ -61,26 +61,25 @@ public class FSJJsonWriter {
      * @param autoIncrement if it auto increments or not
      */
     public static void write(LinkedHashMap<Object, Object> map, SemiClass table, int id, boolean autoIncrement) {
+        boolean hadError = false;
         String path = FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id + ".json";
-        try {
 
-            Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            String jsonString = gson.toJson(map);
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
+        String jsonString = gson.toJson(map);
 
 
-            FileManager.createFile(path);
-
-            Logger.debug("Writing data, id: " + id + ", autoIncrement: " + autoIncrement + ", table: " + table + ", data: " + map);
-
-            try(FileWriter writer = new FileWriter(path, false)) {
-                writer.write(jsonString);
-                writer.flush();
-            }
-
+        Logger.debug("Writing data, id: " + id + ", autoIncrement: " + autoIncrement + ", table: " + table + ", data: " + map);
+        FileManager.createFile(path);
+        try(FileWriter writer = new FileWriter(path, false)) {
+            writer.write(jsonString);
+            writer.flush();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+           FileManager.deleteFsjdbFile(path);
+           Logger.error("Failed to write record, deleting blank record and not incrementing.");
+           hadError = true;
         }
-        if (autoIncrement)
+
+        if (autoIncrement && !hadError)
             JAutoIncrement.increment(table);
     }
 

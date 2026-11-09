@@ -129,6 +129,7 @@ public class FSJDatabaseStructure {
 
         FileManager.mkdir(root);
         FileManager.mkdir(dataDir);
+        FileManager.mkdir(tablesDir);
         FileManager.createFile(dataDir + "/autoIncrement.fsj");
         FileManager.createFile(dataDir + "/autoIncrement.json");
 
@@ -186,9 +187,8 @@ public class FSJDatabaseStructure {
         FileManager.createFile(metaPath);
 
 
-        try {
+        try(Writer metaWriter = new FileWriter(tableDir + "/meta", false);) {
 
-            Writer metaWriter = new FileWriter(tableDir + "/meta", false);
 
             meta.toMap().forEach((String k, Object v) -> {
 

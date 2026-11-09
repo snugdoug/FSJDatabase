@@ -40,6 +40,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.nio.file.Path;
 import java.util.*;
 
@@ -103,14 +104,19 @@ public class TableMeta {
 
         List<SemiField> columnFields = new ArrayList<>(List.of());
 
+        List<Field> fields = Arrays.stream(clazz.getDeclaredFields())
+                .filter(field -> !Modifier.isStatic(field.getModifiers()))
+                .filter(field -> !field.isSynthetic())
+                .toList();
+
         List<String> columnNames = new ArrayList<>();
-        Arrays.stream(clazz.getDeclaredFields()).forEach(((field) -> {
+        fields.forEach(((field) -> {
             columnNames.add(field.getName());
         }));
 
         boolean autoIncrement = true;
         SemiField idField = null;
-        for (Field field : clazz.getDeclaredFields()) {
+        for (Field field : fields) {
             if (field.isAnnotationPresent(Id.class)) {
                 Id id = field.getAnnotation(Id.class);
                 autoIncrement = id.autoIncrement();
@@ -123,15 +129,18 @@ public class TableMeta {
         boolean freeTable = clazz.isAnnotationPresent(FreeTable.class);
 
         Map<String, SemiField> getByColumnNames = new HashMap<>();
-        Arrays.stream(clazz.getDeclaredFields()).forEach((field -> {
+        fields.forEach((field -> {
             if(field.isAnnotationPresent(Column.class))
                 getByColumnNames.put(field.getName(), SemiField.of(field.getType(), field.getName(), convertFieldAnnotationsToList(field.getAnnotations())));
         }));
 
         Map<String, List<String>> getFieldAnnotationsByName = new HashMap<>();
         for (int i = 0; i < clazz.getDeclaredFields().length; i++) {
-            columnFields.add(SemiField.of(clazz.getDeclaredFields()[i].getType(), columnNames.get(i), convertFieldAnnotationsToList(clazz.getDeclaredFields()[i].getAnnotations())));
-            getFieldAnnotationsByName.put(columnNames.get(i), convertFieldAnnotationsToList(clazz.getDeclaredFields()[i].getAnnotations()));
+            assert idField != null;
+            if(idField.isAnnotationPresent(Column.class)) {
+                columnFields.add(SemiField.of(clazz.getDeclaredFields()[i].getType(), columnNames.get(i), convertFieldAnnotationsToList(clazz.getDeclaredFields()[i].getAnnotations())));
+                getFieldAnnotationsByName.put(columnNames.get(i), convertFieldAnnotationsToList(clazz.getDeclaredFields()[i].getAnnotations()));
+            }
         }
 
         Logger.debug("--- Table Meta (By Class): '" + clazz.getName() + "' Results ---");
@@ -156,8 +165,8 @@ public class TableMeta {
      */
     public static TableMeta of(Path pathToMeta) {
         Properties props = new Properties();
-        try {
-            props.load(new FileReader(pathToMeta.toString()));
+        try(FileReader reader = new FileReader(pathToMeta.toString())) {
+            props.load(reader);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -189,9 +198,13 @@ public class TableMeta {
 
             List<String> fieldAnnotations;
             try {
-                BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + fieldName + ".fsj"));
-                String rawAnnotationLine = reader.readLine();
-                fieldAnnotations = List.of(rawAnnotationLine.split(", "));
+                try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + fieldName + ".fsj")) {
+                    try(BufferedReader reader = new BufferedReader(fileReader)) {
+                        String rawAnnotationLine = reader.readLine();
+                        fieldAnnotations = List.of(rawAnnotationLine.split(", "));
+                    }
+                }
+
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Failed to find the field directory\n" + e);
             } catch (IOException e) {
@@ -213,9 +226,11 @@ public class TableMeta {
 
         for (int i = 0; i < columnName.size(); i++) {
             SemiField field = columnFields.get(i);
-            try {
-                BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + field.getName() + ".fsj"));
-                getFieldAnnotationsByName.put(columnName.get(i), Arrays.stream(reader.readLine().split(", ")).toList());
+            try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + field.getName() + ".fsj")) {
+                try(BufferedReader reader = new BufferedReader(fileReader)) {
+                    getFieldAnnotationsByName.put(columnName.get(i), Arrays.stream(reader.readLine().split(", ")).toList());
+                }
+
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("Failed to create buffered reader for reading the annotation file\n" + e);
             } catch (IOException e) {
@@ -227,10 +242,11 @@ public class TableMeta {
         String[] idFieldRaw = props.getProperty("idField").split(" ");
 
 
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + idFieldRaw[1] + ".fsj"));
-            String[] rawAnnotations = reader.readLine().split(", ");
-            idField = new SemiField(idFieldRaw[0], idFieldRaw[1], Arrays.stream(rawAnnotations).toList());
+        try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + idFieldRaw[1] + ".fsj")) {
+            try(BufferedReader reader = new BufferedReader(fileReader)) {
+                String[] rawAnnotations = reader.readLine().split(", ");
+                idField = new SemiField(idFieldRaw[0], idFieldRaw[1], Arrays.stream(rawAnnotations).toList());
+            }
         } catch (FileNotFoundException e) {
             throw new RuntimeException("Failed to create buffered reader for annotations\n" + e);
         } catch (IOException e) {
