@@ -135,13 +135,12 @@ public class TableMeta {
         }));
 
         Map<String, List<String>> getFieldAnnotationsByName = new HashMap<>();
-        for (int i = 0; i < clazz.getDeclaredFields().length; i++) {
-            assert idField != null;
-            if(idField.isAnnotationPresent(Column.class)) {
-                columnFields.add(SemiField.of(clazz.getDeclaredFields()[i].getType(), columnNames.get(i), convertFieldAnnotationsToList(clazz.getDeclaredFields()[i].getAnnotations())));
-                getFieldAnnotationsByName.put(columnNames.get(i), convertFieldAnnotationsToList(clazz.getDeclaredFields()[i].getAnnotations()));
-            }
+        for (Field field : fields) {
+            List<String> annotations = convertFieldAnnotationsToList(field.getAnnotations());
+            columnFields.add(SemiField.of(field.getType(), field.getName(), annotations));
+            getFieldAnnotationsByName.put(field.getName(), annotations);
         }
+
 
         Logger.debug("--- Table Meta (By Class): '" + clazz.getName() + "' Results ---");
         Logger.debug("tableClass: " + new SemiClass(clazz.getSimpleName()));

@@ -202,7 +202,7 @@ public class FSJDatabaseShell {
                     if(CommandParser.verifyIsNum(cmdArray[3])) {
                         List<Double> resultList = CommandParser.parseToDouble(cmdArray[3]);
                         if(resultList.getLast() == 1.0d)
-                            dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], CommandParser.parseToDouble(cmdArray[3]));
+                            dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], CommandParser.parseToDouble(cmdArray[3]).getFirst());
                         else
                             term.writer().println("Invalid syntax for $num[]");
                     }

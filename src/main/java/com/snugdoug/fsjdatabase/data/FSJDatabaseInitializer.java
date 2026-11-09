@@ -230,8 +230,7 @@ public class FSJDatabaseInitializer {
      */
     protected List<SemiClass> scanForAnnotatedClassesAndPackages(Path directory) {
         if(!(new File(directory + "/data/autoIncrement.json").exists())) {
-            Logger.error("Please run the Class initializing method first, as it will break without the proper meta and other files being written by it.");
-            Runtime.getRuntime().exit(1);
+            throw new RuntimeException("Please run the Class initializing method first, as it will break without the proper meta and other files being written by it.");
         }
 
         FSJDatabaseStructure.create();

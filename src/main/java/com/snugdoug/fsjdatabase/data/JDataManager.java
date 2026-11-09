@@ -454,17 +454,22 @@ public class JDataManager {
 
         if(!(Double.parseDouble(data.get(getTableIdName(table)).toString())%1 == 0)) {
             Logger.error(new NumberFormatLogError(Double.parseDouble(data.get(getTableIdName(table)).toString()), "The id in updateById data must be a whole number!"));
-        }
-
-        int id = Integer.parseInt(String.valueOf(data.get(getTableIdName(table))).replaceAll("\\..*$",""));
-        if(!(FSJJsonWriter.tableContainsIdFile(id, table))) {
-            Logger.error(new RecordNotFoundLogError(table, id));
-            Logger.debug("Result: " + !FSJJsonWriter.tableContainsIdFile(id, table));
             return false;
         }
+        try {
+            int id = Integer.parseInt(String.valueOf(data.get(getTableIdName(table))).replaceAll("\\..*$", ""));
+            if (!(FSJJsonWriter.tableContainsIdFile(id, table))) {
+                Logger.error(new RecordNotFoundLogError(table, id));
+                Logger.debug("Result: " + !FSJJsonWriter.tableContainsIdFile(id, table));
+                return false;
+            }
 
-        FSJJsonWriter.write(data, table, id, false);
-        return true;
+            FSJJsonWriter.write(data, table, id, false);
+            return true;
+        } catch (Exception e) {
+            Logger.error("Likely failed to parse id, is it not a parseable number? Id from data: " + data.get(getTableIdName(table)));
+            return false;
+        }
     }
 
     /**
