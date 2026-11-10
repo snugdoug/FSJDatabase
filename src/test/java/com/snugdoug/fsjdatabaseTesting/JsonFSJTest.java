@@ -20,7 +20,8 @@
  * SOFTWARE.
  */
 
-package com.snugdoug.fsjdatabaseTesting;import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
+package com.snugdoug.fsjdatabaseTesting;
+import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
 import com.snugdoug.fsjdatabase.data.JDataManager;
@@ -29,7 +30,6 @@ import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import org.junit.jupiter.api.*;
 
-import java.io.IOException;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;

@@ -129,8 +129,8 @@ public class ParserMap<K, V> implements Map<K, V> {
         Map<String, String> rawData = Parser.parse(unparsed);
         Map.Entry<String, String> entry = rawData.entrySet().iterator().next();
 
-        K key = converter.convert(entry.getKey().toString(), keyToken);
-        V value = converter.convert(entry.getValue().toString(), valueToken);
+        K key = converter.convert(entry.getKey(), keyToken);
+        V value = converter.convert(entry.getValue(), valueToken);
 
         size++;
         return data.put(key, value);

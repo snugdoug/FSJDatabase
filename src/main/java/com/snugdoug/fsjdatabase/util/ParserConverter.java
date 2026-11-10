@@ -37,5 +37,5 @@ public interface ParserConverter {
      * @return           returns the modified input
      * @param <T>        This makes it so you can actually get an output
      */
-    public <T> T convert(String input, TypeToken<T> targetType);
+    <T> T convert(String input, TypeToken<T> targetType);
 }

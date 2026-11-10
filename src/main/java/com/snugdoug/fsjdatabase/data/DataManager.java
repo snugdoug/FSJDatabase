@@ -609,7 +609,7 @@ public class DataManager {
 
                             // gets the value of the key
                             String rawContent = props.getProperty(String.valueOf(key), "EMPTY");
-                            String content = key.toString() + "=" + rawContent;
+                            String content = key + "=" + rawContent;
 
                             String searchTerm = key + "=" +value;
 

@@ -39,11 +39,31 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 
 /**
- * Handles everything related to data managing
+ * <h2>JDataManager</h2>
+ * Manages the database, with many CRUD (Create Read Update Delete) methods.<br>
+ * Near all methods use {@link SemiClass}, but the methods are overloaded to accept {@link Class}'s, keep that in mind!
+ * <h2>Methods</h2>
+ * <h3>Create</h3>
+ * {@link #addToTable(SemiClass, LinkedHashMap)} - Adds data to a specified table
+ * <h3>Read</h3>
+ * {@link #findById(SemiClass, int)} - Finds data in a table by id<br>
+ * {@link #findByValueContaining(SemiClass, Object, Object)} - Finds data in a table by a value containing<br>
+ * {@link #findAllValuesOfKey(SemiClass, String)} - Gets all values of a key from a table<br>
+ * <h3>Update</h3>
+ * {@link #updateById(SemiClass, LinkedHashMap)} - Updates an entire record in the specified table<br>
+ * {@link #updateValueById(SemiClass, int, Object, Object)} - Updates a value in a record by id inside the specified table<br>
+ * {@link #updateContaining(SemiClass, LinkedHashMap, LinkedHashMap)} - Updates a record inside a table if a record matches the search data<br>
+ * {@link #updateValueContaining(SemiClass, Object, Object, Object)} - Searches a table for any occurrences of the key value pair if a match, it replaces the value with the new one
+ * <h3>Delete</h3>
+ * {@link #deleteById(SemiClass, int)} - Deletes a record inside a table by id<br>
+ * {@link #deleteByFromIdToId(SemiClass, int, int)} - Deletes all records in a table from an id to another id<br>
+ * {@link #deleteContaining(SemiClass, Object, Object)} - Searches all the tables records for a record that matches the search term, if found it found a match, it deletes it
+ *
  */
 @SuppressWarnings("rawtypes")
 public class JDataManager {
@@ -56,7 +76,9 @@ public class JDataManager {
 
     }
 
-    private static boolean isFSJDatabaseInitialized;
+    /**
+     * The autoIncrement tables
+     */
     private static List<SemiClass> autoIncrement;
 
 
@@ -68,13 +90,17 @@ public class JDataManager {
      *
      */
     protected static void jDataManagerInit(List<SemiClass> autoIncrement) {
-        isFSJDatabaseInitialized = true;
         JDataManager.autoIncrement = autoIncrement;
     }
 
     /**
-     * Adds data to a given table using {@link LinkedHashMap} to preserve insertion order.
+     * Adds data to a given table using {@link LinkedHashMap} to preserve insertion order.<br><br>
      *
+     * Throws<br>
+     * {@link InvalidDataKeySetLogError}<br>
+     * {@link TableNotFoundException}<br>
+     * When the id was not in data {@code (No Auto Incrementing)}<br>
+     * The id field is in data {@code (Auto Incrementing)}
      *
      * @param dataToAdd the data to be added to the table
      * @param table the table used to add the data
@@ -120,8 +146,12 @@ public class JDataManager {
     }
 
     /**
-     * Adds data to a given table using {@link LinkedHashMap} to preserve insertion order.
-     *
+     * Adds data to a given table using {@link LinkedHashMap} to preserve insertion order.<br><br>
+     * Throws<br>
+     * {@link InvalidDataKeySetLogError}<br>
+     * {@link TableNotFoundException}<br>
+     * When the id was not in data {@code (No Auto Incrementing)}<br>
+     * The id field is in data {@code (Auto Incrementing)}
      *
      * @param dataToAdd the data to be added to the table
      * @param table the table used to add the data
@@ -261,7 +291,7 @@ public class JDataManager {
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + tableName;
 
         try {
-            try(Stream<Path> paths = Files.walk(Paths.get(targetDir));) {
+            try(Stream<Path> paths = Files.walk(Paths.get(targetDir))) {
                 Object finalValue = value;
                 paths
                         .filter(Files::isRegularFile).
@@ -339,7 +369,7 @@ public class JDataManager {
      * @param id the id to find the data
      * @return if it was successful or not
      */
-    public boolean updateValueById(Class table, int id, String key, String value) {
+    public boolean updateValueById(Class table, int id, Object key, Object value) {
         return updateValueById(new SemiClass(table), id, key, value);
     }
 
@@ -365,6 +395,8 @@ public class JDataManager {
             return false;
         }
 
+        AtomicReference<Boolean> writeFailed = new AtomicReference<>(false);
+
         if(GetTypeOf.get(value).getTypeName().equals("java.lang.Integer")) {
             value = Double.parseDouble(value.toString());
         }
@@ -376,21 +408,18 @@ public class JDataManager {
                         .filter(Files::isRegularFile).
                         forEach(file -> {
                             if (file.getFileName().toString().contains(".json")) {
-                                try (FileReader fileReader = new FileReader(file.toFile().getPath())) {
 
-                                    int id = Integer.parseInt(file.getFileName().toString().replace(".json", ""));
-                                    LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
+                                int id = Integer.parseInt(file.getFileName().toString().replace(".json", ""));
+                                LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
 
-                                    if (map.entrySet().contains(Map.entry(key, finalValue))) {
-                                        map.remove(key);
-                                        map.put(key, newValue);
+                                if (map.entrySet().contains(Map.entry(key, finalValue))) {
+                                    map.remove(key);
+                                    map.put(key, newValue);
 
-                                        FSJJsonWriter.write(map, table, id, false);
-                                    }
-
-                                } catch (IOException e) {
-                                    Logger.error("Failed to successfully check file: " + file);
+                                    if (!FSJJsonWriter.write(map, table, id, false))
+                                        writeFailed.set(true);
                                 }
+
                             }
 
                         });
@@ -399,7 +428,7 @@ public class JDataManager {
             Logger.error("Failed to walk through the files in the folder\n" + e);
             return false;
         }
-        return true;
+        return !writeFailed.get();
     }
 
     /**
@@ -456,20 +485,19 @@ public class JDataManager {
             Logger.error(new NumberFormatLogError(Double.parseDouble(data.get(getTableIdName(table)).toString()), "The id in updateById data must be a whole number!"));
             return false;
         }
-        try {
-            int id = Integer.parseInt(String.valueOf(data.get(getTableIdName(table))).replaceAll("\\..*$", ""));
-            if (!(FSJJsonWriter.tableContainsIdFile(id, table))) {
-                Logger.error(new RecordNotFoundLogError(table, id));
-                Logger.debug("Result: " + !FSJJsonWriter.tableContainsIdFile(id, table));
-                return false;
-            }
-
-            FSJJsonWriter.write(data, table, id, false);
-            return true;
-        } catch (Exception e) {
-            Logger.error("Likely failed to parse id, is it not a parseable number? Id from data: " + data.get(getTableIdName(table)));
+        Object rawId = data.get(getTableIdName(table));
+        Integer id = parseWholeId(rawId);
+        if (id == null) {
+            Logger.error(new NumberFormatLogError("The id in updateById data must be a whole number, got: " + rawId));
             return false;
         }
+
+              if (!(FSJJsonWriter.tableContainsIdFile(id, table))) {
+                  Logger.error(new RecordNotFoundLogError(table, id));
+                  return false;
+        }
+
+              return FSJJsonWriter.write(data, table, id, false);
     }
 
     /**
@@ -496,12 +524,6 @@ public class JDataManager {
 
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName();
 
-//        if(data.containsKey(getTableIdName(table)) &&
-//                TableMeta.of(Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + "meta")).isAutoIncrement()) {
-//            Logger.error("Data needs to not contain id field for proper identification!");
-//            return false;
-//        }
-
         Set<String> requiredKeySet = getTableColumns(table, TableMeta.of(table).isAutoIncrement());
 
         if(TableMeta.of(table).isAutoIncrement())
@@ -511,6 +533,8 @@ public class JDataManager {
             Logger.error(new InvalidDataKeySetLogError(data, requiredKeySet));
             return false;
         }
+
+        AtomicReference<Boolean> writeFailed = new AtomicReference<>(false);
 
         Logger.debug("Updating containing");
 
@@ -538,7 +562,8 @@ public class JDataManager {
                                     Logger.debug("Found match, update data: " + newData + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
                                     Logger.debug("Id: " + id);
                                     Logger.debug("Table: " + table);
-                                    FSJJsonWriter.write(newData, table, id, false);
+                                    if (!FSJJsonWriter.write(newData, table, id, false))
+                                        writeFailed.set(true);
                                 }
                             }
 
@@ -547,7 +572,7 @@ public class JDataManager {
                 Logger.error("Failed to walk through directory\n" + e);
                 return false;
             }
-        return true;
+        return !writeFailed.get();
     }
 
     /**
@@ -648,7 +673,7 @@ public class JDataManager {
      * @param value the value to look for
      * @return returns found matches
      */
-    public List<LinkedHashMap<Object, Object>> findByValueContaining(Class table, String key, String value) {
+    public List<LinkedHashMap<Object, Object>> findByValueContaining(Class table, Object key, Object value) {
         return findByValueContaining(new SemiClass(table), key, value);
     }
 
@@ -749,22 +774,24 @@ public class JDataManager {
             finalData.put(getTableIdName(table), id);
 
             FSJJsonWriter.write(finalData, table, id, false);
+            if (!FSJJsonWriter.write(finalData, table, id, false))
+                return false;
             JAutoIncrement.set(table, id + 1);
+
 
         }
 
         // logic for adding data to table without auto increment
         else {
-            int id;
-            try {
-                id = Integer.parseInt(dataToAdd.get(getTableIdName(table)).toString());
-            } catch (NullPointerException e) {
-                Logger.error("Failed to find " + dataToAdd.get(getTableIdName(table) + " in dataToAdd, or failed to parse id."));
+            Object rawId = dataToAdd.get(getTableIdName(table));
+            Integer id = parseWholeId(rawId);
+            if (id == null) {
+                Logger.error(new NumberFormatLogError("The id '" + getTableIdName(table) + "' in dataToAdd must be a whole number, got: " + rawId));
                 return false;
             }
 
             if(!FSJJsonWriter.tableContainsIdFile(id, table))
-                FSJJsonWriter.write(dataToAdd, table, id, false);
+                return FSJJsonWriter.write(dataToAdd, table, id, false);
             else {
                 Logger.error("Data already exists in the database with the id of " + id + "!");
                 return false;
@@ -840,6 +867,25 @@ public class JDataManager {
      */
     protected boolean tableExists(SemiClass table) {
         return FSJDatabaseInitializer.tables.contains(table) | FSJDatabaseInitializer.freeTables.contains(table);
+    }
+
+    /**
+     * Reads an id given as 3, 3L, 3.0 (how Gson reads numbers back), "3" or "3.0".
+     *
+     * @param raw the id value from a record or a data map
+     * @return the id, or null if it is not a whole number
+     */
+    private static Integer parseWholeId(Object raw) {
+        if (raw == null)
+            return null;
+        try {
+            double d = Double.parseDouble(raw.toString().trim());
+            if (d % 1 != 0 || d < Integer.MIN_VALUE || d > Integer.MAX_VALUE)
+                return null;
+            return (int) d;
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
 }

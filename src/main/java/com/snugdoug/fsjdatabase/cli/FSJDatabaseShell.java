@@ -87,7 +87,7 @@ public class FSJDatabaseShell {
             Runtime.getRuntime().exit(1);
         }
 
-        FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration().build(pathToDBFile.toFile().getName(), pathToDBFile.getParent());
+        FSJDatabaseConfiguration conf = new FSJDatabaseConfiguration().setRootFSJDatabaseDirectoryName(pathToDBFile.toFile().getName()).setDirectoryForDatabaseRoot(pathToDBFile.getParent());
 
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(true);
 
@@ -155,13 +155,13 @@ public class FSJDatabaseShell {
                         pathToMeta = Path.of(FSJDatabaseStructure.tablesDir() + "/" + cmdArray[1] + "/meta");
                         try {
 
-                        int id = Integer.parseInt(cmdArray[2]);
-                        term.writer().println("Table: " + cmdArray[1]);
-                        term.writer().println("ID: " + cmdArray[2]);
+                            int id = Integer.parseInt(cmdArray[2]);
+                            term.writer().println("Table: " + cmdArray[1]);
+                            term.writer().println("ID: " + cmdArray[2]);
 
-                        LinkedHashMap<Object, Object> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1]), id);
-                        term.writer().println(getByIdResult);
-                        TableMeta getByIdTableMeta = TableMeta.of(pathToMeta);
+                            LinkedHashMap<Object, Object> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1]), id);
+                            term.writer().println(getByIdResult);
+                            TableMeta getByIdTableMeta = TableMeta.of(pathToMeta);
                         } catch (Exception e) {
                             term.writer().println("Failed to find Table Directory, Meta File, or Id File.");
                             term.writer().flush();
@@ -197,33 +197,33 @@ public class FSJDatabaseShell {
 
                         Logger.debug("Tests");
 
-                    TableMeta meta = TableMeta.of(tableMetaPath);
-                    List<LinkedHashMap<Object, Object>> dataByValueContaining = new ArrayList<>();
-                    if(CommandParser.verifyIsNum(cmdArray[3])) {
-                        List<Double> resultList = CommandParser.parseToDouble(cmdArray[3]);
-                        if(resultList.getLast() == 1.0d)
-                            dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], CommandParser.parseToDouble(cmdArray[3]).getFirst());
+                        TableMeta meta = TableMeta.of(tableMetaPath);
+                        List<LinkedHashMap<Object, Object>> dataByValueContaining = new ArrayList<>();
+                        if(CommandParser.verifyIsNum(cmdArray[3])) {
+                            List<Double> resultList = CommandParser.parseToDouble(cmdArray[3]);
+                            if(resultList.getLast() == 1.0d)
+                                dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], CommandParser.parseToDouble(cmdArray[3]).getFirst());
+                            else
+                                term.writer().println("Invalid syntax for $num[]");
+                        }
                         else
-                            term.writer().println("Invalid syntax for $num[]");
-                    }
-                    else
-                        dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
+                            dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
 
 
                         // You know I don't think we need that after I just examined my code...
                         //                    dataByValueContaining.sort(new IdSortedComparator());
-                    dataByValueContaining.forEach((hashmap) -> {
+                        dataByValueContaining.forEach((hashmap) -> {
 
 
 
 
-                        String formatted = hashmap.get(data.getTableIdName(SemiClass.nameOf(meta.getTableName()))) + ": " + hashmap.toString()
-                                .replace("{", "")
-                                .replace("}", "");
+                            String formatted = hashmap.get(data.getTableIdName(SemiClass.nameOf(meta.getTableName()))) + ": " + hashmap.toString()
+                                    .replace("{", "")
+                                    .replace("}", "");
 
-                        term.writer().println(formatted);
+                            term.writer().println(formatted);
 
-                    });
+                        });
                     } else {
                         term.writer().println("Failed to find Table Directory, Meta File, or Id File.");
                     }
@@ -260,5 +260,7 @@ public class FSJDatabaseShell {
     public static boolean validTableMetaPath(Path path) {
         return path.toFile().exists();
     }
+
+
 
 }

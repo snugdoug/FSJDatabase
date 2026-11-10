@@ -22,42 +22,43 @@
 
 package com.snugdoug.fsjdatabase.util.clazz;
 
-import java.util.HashMap;
 import java.util.Objects;
 
 /**
  * A pseudo class that allows FSJDatabase to create classes out of thin air without java saying "No."
+ * @param className the class name
  */
-public class SemiClass {
-    private final String className;
-
+public record SemiClass(String className) {
     /**
      * Creates a SemiClass instance off of a class name
+     *
      * @param className the class name
      */
-    public SemiClass(String className) {
-        this.className = className;
+    public SemiClass {
     }
 
     /**
      * Creates a SemiClass instance off of a regular class
+     *
      * @param clazz the class to create a SemiClass off of
      */
     public SemiClass(Class<?> clazz) {
-        this.className = clazz.getSimpleName();
+        this(clazz.getSimpleName());
     }
 
     /**
      * Converts the SemiClass to a string
+     *
      * @return the SemiClass as a string
      */
     @Override
     public String toString() {
-        return getClassName();
+        return className();
     }
 
     /**
      * Checks if the SemiClass is equal to another object
+     *
      * @param obj the reference object with which to compare.
      * @return if this SemiClass is equal to {@code obj}
      */
@@ -65,7 +66,7 @@ public class SemiClass {
     public boolean equals(Object obj) {
         if (this == obj)
             return true;
-        if(!(obj instanceof SemiClass other))
+        if (!(obj instanceof SemiClass other))
             return false;
         return Objects.equals(this.className, other.className);
 
@@ -73,6 +74,7 @@ public class SemiClass {
 
     /**
      * Checks if the SemiClass is equal to another object using hashcode's
+     *
      * @param obj the reference object with which to compare.
      * @return if this SemiClass is equal to {@code obj} using hashcode
      */
@@ -82,22 +84,26 @@ public class SemiClass {
 
     /**
      * Gets the class name
+     *
      * @return the class name
      */
-    public String getClassName() {
+    @Override
+    public String className() {
         return className;
     }
 
     /**
-     * The same as {@link #getClassName()}, this exists for not wanting to change code reasons
+     * The same as {@link #className ()}, this exists for not wanting to change code reasons
+     *
      * @return the class name
      */
     public String getSimpleName() {
-        return getClassName();
+        return className();
     }
 
     /**
      * Creates a new SemiClass instance off of a name
+     *
      * @param name the name of the new SemiClass
      * @return the SemiClass
      */
@@ -105,12 +111,4 @@ public class SemiClass {
         return new SemiClass(name);
     }
 
-    /**
-     * Gets the hashcode of SemiClass
-     * @return the hashcode
-     */
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(className);
-    }
 }

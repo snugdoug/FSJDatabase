@@ -32,7 +32,7 @@ import com.snugdoug.fsjdatabase.util.Logger;
  * @since 1.5.5
  */
 public abstract class LogError {
-    private String err;
+    private final String err;
 
     /**
      * Send a custom error message

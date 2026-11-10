@@ -152,4 +152,6 @@ public class CommandParser {
         Logger.debug(numSyntax.startsWith("$num[") && numSyntax.endsWith("]"));
         return numSyntax.startsWith("$num[") && numSyntax.endsWith("]");
     }
+
+
 }

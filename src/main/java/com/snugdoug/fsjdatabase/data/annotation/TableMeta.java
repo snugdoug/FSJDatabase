@@ -28,11 +28,11 @@ import com.snugdoug.fsjdatabase.annotation.Id;
 import com.snugdoug.fsjdatabase.annotation.Table;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
-import com.snugdoug.fsjdatabase.data.JDataManager;
 import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.util.field.SemiField;
+import org.jspecify.annotations.NonNull;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -182,7 +182,7 @@ public class TableMeta {
         String className = "Crap the code didn't work if you see this as a table or in an exception";
 
         for (String descriptor :  descriptors) {
-            descriptor.trim();
+            descriptor = descriptor.trim();
 
             String[] parts = descriptor.split(" ");
 
@@ -195,20 +195,7 @@ public class TableMeta {
             String classType = parts[0];
 
 
-            List<String> fieldAnnotations;
-            try {
-                try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + fieldName + ".fsj")) {
-                    try(BufferedReader reader = new BufferedReader(fileReader)) {
-                        String rawAnnotationLine = reader.readLine();
-                        fieldAnnotations = List.of(rawAnnotationLine.split(", "));
-                    }
-                }
-
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException("Failed to find the field directory\n" + e);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read the Annotation data file\n" + e);
-            }
+            List<String> fieldAnnotations = getFieldAnnotations(className, fieldName);
             columnFields.add(new SemiField(classType, fieldName, fieldAnnotations));
             Logger.debug("Finished reading fields annotations: " + fieldAnnotations);
 
@@ -225,32 +212,14 @@ public class TableMeta {
 
         for (int i = 0; i < columnName.size(); i++) {
             SemiField field = columnFields.get(i);
-            try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + field.getName() + ".fsj")) {
-                try(BufferedReader reader = new BufferedReader(fileReader)) {
-                    getFieldAnnotationsByName.put(columnName.get(i), Arrays.stream(reader.readLine().split(", ")).toList());
-                }
-
-            } catch (FileNotFoundException e) {
-                throw new RuntimeException("Failed to create buffered reader for reading the annotation file\n" + e);
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to read annotation file\n" + e);
-            }
+            getFieldAnnotationsByName.put(columnName.get(i), getFieldAnnotations(className, field.getName()));
         }
 
         SemiField idField = null;
         String[] idFieldRaw = props.getProperty("idField").split(" ");
 
 
-        try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + idFieldRaw[1] + ".fsj")) {
-            try(BufferedReader reader = new BufferedReader(fileReader)) {
-                String[] rawAnnotations = reader.readLine().split(", ");
-                idField = new SemiField(idFieldRaw[0], idFieldRaw[1], Arrays.stream(rawAnnotations).toList());
-            }
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Failed to create buffered reader for annotations\n" + e);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read annotations file\n" + e);
-        }
+        idField = new SemiField(idFieldRaw[0], idFieldRaw[1], getFieldAnnotations(className, idFieldRaw[1]));
 
         Logger.debug("--- Table Meta (By Path): '" + className + "' Results ---");
         Logger.debug("tableClass: " + new SemiClass(className));
@@ -267,6 +236,27 @@ public class TableMeta {
 
 
         return new TableMeta(new SemiClass(className), className, freeTable, autoIncrement, columnFields, columnName, idField, getByColumnNames, getFieldAnnotationsByName);
+    }
+
+    private static @NonNull List<String> getFieldAnnotations(String className, String fieldName) {
+        List<String> fieldAnnotations;
+        try {
+            try(FileReader fileReader = new FileReader(FSJDatabaseStructure.tablesDir() + "/" + className + "/fields/" + fieldName + ".fsj")) {
+                try(BufferedReader reader = new BufferedReader(fileReader)) {
+                    String rawAnnotationLine = reader.readLine();
+                    if(rawAnnotationLine == null || rawAnnotationLine.isBlank())
+                        return List.of();
+
+                    fieldAnnotations = List.of(rawAnnotationLine.split(", "));
+                }
+            }
+
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Failed to find the field directory\n" + e);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read the Annotation data file\n" + e);
+        }
+        return fieldAnnotations;
     }
 
     /**

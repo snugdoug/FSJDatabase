@@ -42,6 +42,8 @@ import java.util.stream.Stream;
 /**
  * This creates the core structure of FSJDatabase.
  */
+
+@SuppressWarnings("rawtypes, deprecation, unused")
 public class FSJDatabaseStructure {
     /**
      * Create a new instance
@@ -97,8 +99,9 @@ public class FSJDatabaseStructure {
      * Provides the arguments for {@link #createStructure(Path, String)} so you don't have to manually provide them
      */
     public static void create() {
+        Path rootDirectory = Path.of(currentDir);
         if(FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName && !FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath)
-            createStructure(Path.of(currentDir), FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
+            createStructure(rootDirectory, FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
         if(!FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName && FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath)
             createStructure(FSJDatabaseConfiguration.directoryForDatabaseRoot, "FSJDatabase");
@@ -107,7 +110,7 @@ public class FSJDatabaseStructure {
             createStructure(FSJDatabaseConfiguration.directoryForDatabaseRoot, FSJDatabaseConfiguration.rootFSJDatabaseDirectoryName);
 
         if(!FSJDatabaseConfiguration.didChangeFSJDatabaseRootPath && !FSJDatabaseConfiguration.didChangeFSJDatabaseRootDirectoryName)
-            createStructure(Path.of(currentDir), "FSJDatabase");
+            createStructure(rootDirectory, "FSJDatabase");
 
 
     }
@@ -143,18 +146,11 @@ public class FSJDatabaseStructure {
      * -------- table
      *
      * @param table the table to add
-     * @param autoIncrement whether it auto increments
      */
-    protected static void addTable(Class table, boolean autoIncrement) {
+    protected static void addTable(Class table) {
         create();
 
         Map<String, Integer> idMap = JAutoIncrement.getAll();
-
-        if(idMap == null) {
-            Logger.debug("idMap was checked as null, confirmation: " + idMap);
-            idMap = new HashMap<>();
-            Logger.warn("idMap was null! Possible reasons are: First run, or an actual bug.");
-        }
 
         try {
             if (!idMap.containsKey(table.getSimpleName())) {
@@ -168,7 +164,6 @@ public class FSJDatabaseStructure {
                 try(Writer jwriter = new FileWriter(dataDir + "/" + "autoIncrement.json", false)) {
                     jwriter.append(gson.toJson(idMap));
                     jwriter.flush();
-                    jwriter.close();
                 }
             }
         } catch (Exception e) {
@@ -187,7 +182,7 @@ public class FSJDatabaseStructure {
         FileManager.createFile(metaPath);
 
 
-        try(Writer metaWriter = new FileWriter(tableDir + "/meta", false);) {
+        try(Writer metaWriter = new FileWriter(tableDir + "/meta", false)) {
 
 
             meta.toMap().forEach((String k, Object v) -> {
@@ -199,7 +194,6 @@ public class FSJDatabaseStructure {
                 }
             });
             metaWriter.flush();
-            metaWriter.close();
         } catch (IOException e) {
             throw new RuntimeException("Failed to create table metadata file\n" + e);
         }
@@ -294,7 +288,7 @@ public class FSJDatabaseStructure {
         }
 
         List<Path> tablesPaths = new ArrayList<>();
-        HashMap<Path, SemiClass> tableMap = new HashMap();
+        HashMap<Path, SemiClass> tableMap = new HashMap<>();
         Logger.debug("Tables: " + FSJDatabaseInitializer.tables);
         FSJDatabaseInitializer.tables.forEach((table) -> {
             tablesPaths.add(Path.of(tablesDir + "/" + table.getSimpleName()));
@@ -302,7 +296,7 @@ public class FSJDatabaseStructure {
         });
 
         List<Path> freeTablePaths = new ArrayList<>();
-        HashMap<Path, SemiClass> freeTableMap = new HashMap();
+        HashMap<Path, SemiClass> freeTableMap = new HashMap<>();
         FSJDatabaseInitializer.freeTables.forEach((table) -> {
             freeTablePaths.add(Path.of(tablesDir + "/" + table.getSimpleName()));
             freeTableMap.put(Path.of(tablesDir + "/" + table.getSimpleName()), table);
@@ -319,16 +313,14 @@ public class FSJDatabaseStructure {
             if(isAutoIncrementEmpty.get()) {
                 HashMap<Object, Object> temp = new HashMap<>();
                 HashMap<SemiClass, Integer> result = new HashMap<>();
-                reader.lines().forEach((line) -> {
-                    temp.putAll(Parser.parse(line));
-                });
+                reader.lines().forEach((line) -> temp.putAll(Parser.parse(line)));
                 for (SemiClass table : FSJDatabaseInitializer.tables) {
                     int id = Integer.parseInt(temp.get(table.getSimpleName()).toString());
                     result.put(table, id);
                 }
-                for (SemiClass freetable : FSJDatabaseInitializer.freeTables) {
-                    int id = Integer.parseInt(temp.get(freetable.getSimpleName()).toString());
-                    result.put(freetable, id);
+                for (SemiClass freeTable : FSJDatabaseInitializer.freeTables) {
+                    int id = Integer.parseInt(temp.get(freeTable.getSimpleName()).toString());
+                    result.put(freeTable, id);
                 }
                 FSJJsonWriter.writeAutoIncrementFile(result);
                 FileManager.deleteFsjdbFile(FSJDatabaseStructure.dataDir + "/autoIncrement.fsj");
@@ -343,7 +335,10 @@ public class FSJDatabaseStructure {
             try(Stream<Path> stream = Files.walk(path)) {
 
                 stream.forEach((file) -> {
+
                     if (!new File(tablesDir + "/" + tableMap.get(path).toString() + "/" + file.toFile().getName().replace(".txt", ".json")).exists() && file.toFile().getName().endsWith(".txt")) {
+
+                        AtomicReference<Boolean> fileFailed = new AtomicReference<>(false);
                         TableMeta meta = TableMeta.of(Path.of(path + "/meta"));
                         List<SemiField> fields = meta.getColumnFields();
                         LinkedHashMap<Object, Object> result = new LinkedHashMap<>();
@@ -395,16 +390,19 @@ public class FSJDatabaseStructure {
                                         Logger.debug(tableMap.get(path));
                                     }
                                 }
-                            } catch (IOException e) {
-                                if(file.endsWith(".txt")) {
-                                    Logger.warn("Failed do the proper converting process for file: " + file + "\n" + e);
-                                    failedCount.getAndSet(failedCount.get() + 1);
-                                }
+                            } catch (IOException | RuntimeException e) {
+                                Logger.warn("Failed do the proper converting process for field " + field.getName() + " in file: " + file + "\n" + e);
+                                fileFailed.set(true);
                             }
                         });
-                        FileManager.deleteFsjdbFile(String.valueOf(file));
-                        FSJJsonWriter.write(result, tableMap.get(path), Integer.parseInt(file.getFileName().toString().replace(".txt", "")), false);
-                        updatedCount.getAndSet(updatedCount.get() + 1);
+                        int id = Integer.parseInt(file.getFileName().toString().replace(".txt", ""));
+                        if (fileFailed.get() || !FSJJsonWriter.write(result, tableMap.get(path), id, false)) {
+                            failedCount.getAndSet(failedCount.get() + 1);
+                            Logger.warn("Kept " + file + " unconverted");
+                        } else {
+                            FileManager.deleteFsjdbFile(String.valueOf(file));
+                            updatedCount.getAndSet(updatedCount.get() + 1);
+                        }
                     } else {
                         if(file.toFile().getName().endsWith(".txt")) {
                             failedCount.getAndSet(failedCount.get() + 1);
@@ -414,6 +412,7 @@ public class FSJDatabaseStructure {
                 });
             } catch (Exception e) {
                 Logger.warn("Failed to walk through directory: " + path + "\n" + e);
+                failedCount.getAndSet(failedCount.get() + 1);
             }
         });
         // Free Tables
@@ -429,16 +428,16 @@ public class FSJDatabaseStructure {
 
                             if (file.toFile().exists()) {
                                 try (BufferedReader reader = new BufferedReader(new FileReader(String.valueOf(file)))) {
-                                    reader.lines().forEach((line) -> {
-                                        result.putAll(Parser.parse(line));
-                                    });
+                                    reader.lines().forEach((line) -> result.putAll(Parser.parse(line)));
+                                    FileManager.deleteFsjdbFile(String.valueOf(file));
+                                    FSJJsonWriter.write(result, freeTableMap.get(path), Integer.parseInt(file.getFileName().toString().replace(".txt", "")), false);
+                                    updatedCount.getAndSet(updatedCount.get() + 1);
                                 } catch (Exception e) {
                                     Logger.warn("Failed to convert Free Table file: " + file);
+                                    failedCount.getAndSet(failedCount.get() + 1);
                                 }
                             }
-                            FileManager.deleteFsjdbFile(String.valueOf(file));
-                            FSJJsonWriter.write(result, freeTableMap.get(path), Integer.parseInt(file.getFileName().toString().replace(".txt", "")), false);
-                            updatedCount.getAndSet(updatedCount.get() + 1);
+
                         }
                     } else {
                         if(file.toFile().getName().endsWith(".txt")) {

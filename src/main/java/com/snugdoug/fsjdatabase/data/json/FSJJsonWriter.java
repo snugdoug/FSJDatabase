@@ -24,9 +24,6 @@ package com.snugdoug.fsjdatabase.data.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.stream.JsonWriter;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
 import com.snugdoug.fsjdatabase.data.FileManager;
 import com.snugdoug.fsjdatabase.data.JAutoIncrement;
@@ -34,7 +31,6 @@ import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.HashMap;
@@ -60,7 +56,7 @@ public class FSJJsonWriter {
      * @param id the id
      * @param autoIncrement if it auto increments or not
      */
-    public static void write(LinkedHashMap<Object, Object> map, SemiClass table, int id, boolean autoIncrement) {
+    public static boolean write(LinkedHashMap<Object, Object> map, SemiClass table, int id, boolean autoIncrement) {
         boolean hadError = false;
         String path = FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id + ".json";
 
@@ -81,6 +77,8 @@ public class FSJJsonWriter {
 
         if (autoIncrement && !hadError)
             JAutoIncrement.increment(table);
+
+        return !hadError;
     }
 
     /**
@@ -90,14 +88,12 @@ public class FSJJsonWriter {
     public static void writeAutoIncrementFile(HashMap<SemiClass, Integer> map) {
         String path = FSJDatabaseStructure.dataDir() + "/" + "autoIncrement" + ".json";
         try {
-
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String jsonString = gson.toJson(map);
-            FileWriter writer = new FileWriter(path);
-
-            writer.write(jsonString);
-            writer.flush();
-            writer.close();
+            try (FileWriter writer = new FileWriter(path)) {
+                writer.write(jsonString);
+                writer.flush();
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

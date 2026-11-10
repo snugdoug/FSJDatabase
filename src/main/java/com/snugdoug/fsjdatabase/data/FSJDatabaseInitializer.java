@@ -13,6 +13,7 @@ import org.reflections.scanners.Scanners;
 
 import java.io.*;
 import java.lang.reflect.Field;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,9 +21,18 @@ import java.util.*;
 import java.util.stream.Stream;
 
 /**
- * The initializer for FSJDatabase<br>
- * If this is not called before things like {@link JDataManager}, it won't be able to work
+ * <h2>FSJDatabaseInitializer</h2>
+ * Manages things related to initializing FSJDatabase
+ * <h2>Methods of Initialization</h2>
+ * There are two main ways to initialize FSJDatabase:<br>
+ * Class Scanning - {@link #scanForAnnotatedClassesAndPackages(Class)}<br>
+ * Directory Scanning - {@link #scanForAnnotatedClassesAndPackages(Path)}<br>
+ * Note: Directory Scanning needs Class Scanning to be run first!<br><br>
+ *
+ * Classing Scanning uses {@code Reflections} library to scan for annotated classes and add them as tables.<br>
+ * Directory Scanning uses the {@link TableMeta} class to read each tables meta file then gather data and find tables.
  */
+@SuppressWarnings("rawtypes unused")
 public class FSJDatabaseInitializer {
 
     /**
@@ -41,7 +51,7 @@ public class FSJDatabaseInitializer {
     protected static List<SemiClass> freeTables = new ArrayList<>();
 
     /**
-     * This is called to initialize FSJDatabase
+     * This is called to initialize FSJDatabase using the {@code Class Scanning} method
      *
      * @param mainClass this gives the base package to {@link #scanForAnnotatedClassesAndPackages(Class)}
      */
@@ -63,9 +73,9 @@ public class FSJDatabaseInitializer {
     }
 
     /**
-     * The method to load by directory. Please only use true when using this.<br>
+     * The method to load by directory. Please only have the useDirectory boolean true when using this.<br>
      * If you intend to load by class use {@link #FSJDatabaseInitializer(Class mainclass)}
-     * @param useDirectory tells fsjdatabase whether to use directory loading or not.
+     * @param useDirectory tells fsjdatabase whether to use directory loading or not (param is mainly here for overloading constructor).
      */
     @SuppressWarnings("deprecation")
     public FSJDatabaseInitializer(boolean useDirectory) {
@@ -97,10 +107,19 @@ public class FSJDatabaseInitializer {
     }
 
     /**
-     * Using Java Reflection Library to get the Annotated Classes
+     * Class scanning method, this method is the {@code general} method of {@code initalizing} FSJDatabase that you should use.<br>
+     * It scans for all classes in the package(s) of {@code mainClass} annotated with {@link Table} or {@link FreeTable}, then puts it in a {@code Set<Class<?>>}<br>
+     * General prep work are done right after the {@code scanning}.<br>
+     * Such as converting the classes to {@link SemiClass}'s as {@link JDataManager} use those, including nearly {@code everything} else.<br>
+     * Finally it repeats through the classes and analyzes their annotations and fields, once done it returns the autoIncrement list as everything else was modified in loop.<br><br>
+     *
+     * Throws<br>
+     * {@link Table} and {@link FreeTable} annotation on same class<br>
+     * Table has no data (no fields)<br>
+     * Table has no id field<br>
      *
      * @param mainClass this gives the base package to FSJDatabase
-     * @return whether to use auto increment or not
+     * @return what classes use auto increment
      */
     protected List<SemiClass> scanForAnnotatedClassesAndPackages(Class<?> mainClass) {
 
@@ -129,7 +148,7 @@ public class FSJDatabaseInitializer {
         freeTables = freeTableClasses.stream().toList();
 
         for (Class<?> clazz : freeTableClassesUnparsed) {
-            if(tables.contains(clazz)) {
+            if(tableClassesUnparsed.contains(clazz)) {
                 throw new RuntimeException("You can not have the '@table' and '@freeTable' annotated on the same class.");
             }
         }
@@ -158,8 +177,6 @@ public class FSJDatabaseInitializer {
 
                     if (field.isAnnotationPresent(Column.class)) {
                         Logger.debug("Found column " + field.getName() + " in table class " + field.getDeclaringClass().getSimpleName());
-                        Column columnDetail = field.getAnnotation(Column.class);
-                        String colName = columnDetail.name().isEmpty() ? field.getName() : columnDetail.name();
                     }
                 }
             }
@@ -173,7 +190,7 @@ public class FSJDatabaseInitializer {
             }
 
             if (FSJDatabaseStructure.isTableNotInDatabase(clazz) | FSJDatabaseStructure.isTableNotFoundInAutoIncrement(clazz)) {
-                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(new SemiClass(clazz)));
+                FSJDatabaseStructure.addTable(clazz);
             }
         }
 
@@ -198,10 +215,6 @@ public class FSJDatabaseInitializer {
                     hasAutoIncrement = idDetail.autoIncrement();
                 }
 
-                if (field.isAnnotationPresent(Column.class)) {
-                    Column columnDetail = field.getAnnotation(Column.class);
-                    String colName = columnDetail.name().isEmpty() ? field.getName() : columnDetail.name();
-                }
             }
             if(!tableHasIdField) {
                 throw new IdNotFoundException(clazz);
@@ -210,7 +223,7 @@ public class FSJDatabaseInitializer {
                 autoIncrement.add(SemiClass.nameOf(clazz.getSimpleName()));
             }
             if(FSJDatabaseStructure.isTableNotInDatabase(clazz) | FSJDatabaseStructure.isTableNotFoundInAutoIncrement(clazz)) {
-                FSJDatabaseStructure.addTable(clazz, autoIncrement.contains(new SemiClass(clazz)));
+                FSJDatabaseStructure.addTable(clazz);
 
             }
         }
@@ -221,10 +234,19 @@ public class FSJDatabaseInitializer {
     }
 
     /**
-     * Much more complex scanning than other method, as the library doesn't have access to the classes.<br>
-     * This will not work on a brand new database, as it requires the meta to be written by the main method of initializing.<br>
-     * I physically cannot get it to run with just the directory as it needs the classes to write the meta and other fields.
+     * Much more {@code complex} scanning than other method, as the library doesn't have access to the classes.<br>
+     * This will not work on a brand-new database, as it requires the meta to be written by the main method of initializing.<br>
+     * I physically get it to run with just the directory as it needs the classes to write the meta and other fields.<br><br>
      *
+     * This builds off of the other {@link #scanForAnnotatedClassesAndPackages(Class)} method.<br>
+     * It does not scan for classes, instead it walks through a database if it appears to be {@code valid}.<br>
+     * It goes in the {@link FSJDatabaseStructure#tablesDir} directory as the structure has been initialized before the loops.<br>
+     * Then for each folder it finds, it goes in the folder and scans the folder for the {@code meta} file.<br>
+     * When a {@code meta file} is found in the folder it sends it to {@link TableMeta} and reports a {@code table found}.<br><br>
+     *
+     * Throws<br>
+     * Detects a database is not a database<br>
+     * Failure to walk through directories<br><br>
      * @param directory The directory
      * @return returns auto incremented tables
      */
@@ -236,12 +258,10 @@ public class FSJDatabaseInitializer {
         FSJDatabaseStructure.create();
 
         List<SemiClass> autoIncrement = new ArrayList<>();
-        try {
-            Files.newDirectoryStream(Path.of(FSJDatabaseStructure.tablesDir)).forEach(dir -> {
+        try(DirectoryStream<Path> stream = Files.newDirectoryStream(Path.of(FSJDatabaseStructure.tablesDir))) {
+            stream.forEach(dir -> {
 
-                try {
-
-                    Stream<Path> paths = Files.walk(Paths.get(FSJDatabaseStructure.tablesDir));
+                try(Stream<Path> paths = Files.walk(Paths.get(FSJDatabaseStructure.tablesDir))) {
                     paths
                             .filter(Files::isRegularFile).
                             forEach(file -> {
