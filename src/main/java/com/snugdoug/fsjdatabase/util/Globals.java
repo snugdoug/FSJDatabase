@@ -22,16 +22,31 @@
 
 package com.snugdoug.fsjdatabase.util;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.util.LinkedHashMap;
+
 /**
- * Global values<br>
- * Planned to be added soon, currently in concept
+ * <h2>Globals</h2>
+ * Global values that a static and won't change
  */
-public class Global {
+public class Globals {
+
+    /**
+     * The generic map type ({@literal LinkedHashMap<Object, Object>}) as a type token
+     */
+    public static final TypeToken<LinkedHashMap<Object, Object>> genericMapType = new TypeToken<>() {};
+
+    /**
+     * The id map type ({@literal LinkedHashMap<String, Integer>}) as a type token
+     */
+    public static final TypeToken<LinkedHashMap<String, Integer>> idMapType = new TypeToken<>() {};
 
     /**
      * Create a new instance
      */
-    public Global() {
+    public Globals() {
 
     }
 }

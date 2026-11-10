@@ -23,6 +23,7 @@
 package com.snugdoug.fsjdatabase.util;
 
 import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
+import com.snugdoug.fsjdatabase.exception.logError.AdvancedLogError;
 import com.snugdoug.fsjdatabase.exception.logError.LogError;
 
 import java.util.List;
@@ -105,6 +106,15 @@ public class Logger {
         System.out.println(RED + translateLogErrorText(error.getError(), error) + RESET);
     }
 
+    /**
+     * Displays a {@link LogError} API Message using the advanced version ({@link AdvancedLogError})
+     * @param error the error
+     */
+    public static void error(AdvancedLogError error) {
+        System.out.println(RED + translateAdvancedLogErrorText(error) + RESET);
+    }
+
+
 
     /**
      * Displays a debug message
@@ -144,6 +154,20 @@ public class Logger {
         List<String> caller = List.of(callerName.split(" "));
         return "(" + caller.get(caller.size() - 1) + "." +
                 new Throwable().fillInStackTrace().getStackTrace()[2].getMethodName() + ") " + err.getClass().getSimpleName() + ": " + text;
+    }
+
+    /**
+     * Translates text from "Text" to "(caller.method) {@literal [LOG ERROR]: }Text\nStacktrace: [STACK TRACE]"
+     *
+     * @return the translated String
+     */
+    private static String translateAdvancedLogErrorText(AdvancedLogError err) {
+        String callerName = getCallerClassName(4);
+        callerName = callerName.replace(".", " ");
+        List<String> caller = List.of(callerName.split(" "));
+        return "(" + caller.get(caller.size() - 1) + "." +
+                new Throwable().fillInStackTrace().getStackTrace()[2].getMethodName() + ") " + err.getClass().getSimpleName() + ": " + err.getMsg() + "" +
+                "\nStacktrace: " + err.getStacktrace();
     }
 
     /**

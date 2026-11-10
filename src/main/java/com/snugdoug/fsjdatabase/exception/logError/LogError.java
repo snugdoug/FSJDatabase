@@ -28,7 +28,6 @@ import com.snugdoug.fsjdatabase.util.Logger;
  * LogError API<br>
  * This is the base error for the api<br><br>
  * The main reason this exists is to make premade errors, to reduce boilerplate code<br>
- * When using this, make sure to override all methods!
  * @since 1.5.5
  */
 public abstract class LogError {

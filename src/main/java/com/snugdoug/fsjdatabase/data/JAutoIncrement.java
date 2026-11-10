@@ -24,7 +24,7 @@ package com.snugdoug.fsjdatabase.data;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
+import com.snugdoug.fsjdatabase.util.Globals;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
@@ -41,8 +41,8 @@ public class JAutoIncrement {
      * Create a new instance
      */
     public JAutoIncrement() {
-
     }
+
 
     /**
      * Gets the id for the table
@@ -90,9 +90,7 @@ public class JAutoIncrement {
         try {
             reader = new FileReader(path);
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            TypeToken<Map<String, Integer>> mapType = new TypeToken<>() {
-            };
-            Map<String, Integer> result = gson.fromJson(reader, mapType);
+            Map<String, Integer> result = gson.fromJson(reader, Globals.idMapType);
             Logger.debug("Gson result: " + result);
 
             if(result == null) {

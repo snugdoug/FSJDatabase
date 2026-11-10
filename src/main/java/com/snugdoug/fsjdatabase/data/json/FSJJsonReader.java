@@ -24,18 +24,14 @@ package com.snugdoug.fsjdatabase.data.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.reflect.TypeToken;
-import com.google.gson.stream.JsonReader;
 import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
+import com.snugdoug.fsjdatabase.util.Globals;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * Reads files in the database, reducing boilerplate code.
@@ -61,10 +57,8 @@ public class FSJJsonReader {
         String path = FSJDatabaseStructure.tablesDir() + "/" + table.getSimpleName() + "/" + id + ".json";
         try(FileReader reader = new FileReader(path)) {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
-            TypeToken<LinkedHashMap<Object, Object>> mapType = new TypeToken<>() {
-            };
 
-            LinkedHashMap<Object, Object> result = gson.fromJson(reader, mapType);
+            LinkedHashMap<Object, Object> result = gson.fromJson(reader, Globals.genericMapType);
 
             return result;
         } catch (IOException e) {

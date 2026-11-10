@@ -44,7 +44,7 @@ import java.util.stream.Stream;
 
 
 /**
- * <h2>JDataManager</h2>
+ * <h2>JDataManager (JDM)</h2>
  * Manages the database, with many CRUD (Create Read Update Delete) methods.<br>
  * Near all methods use {@link SemiClass}, but the methods are overloaded to accept {@link Class}'s, keep that in mind!
  * <h2>Methods</h2>
@@ -169,7 +169,11 @@ public class JDataManager {
     }
 
         /**
-         * Deletes data from a {@code table} by id
+         * Deletes data from a {@code table} by id<br><br>
+         *
+         * Throws:<br>
+         * {@link TableNotFoundException}<br>
+         * {@link RecordNotFoundLogError}
          *
          * @param table the table to delete from
          * @param id the id to search for
@@ -200,7 +204,11 @@ public class JDataManager {
     }
 
     /**
-     * Deletes data from a {@code table} by id
+     * Deletes data from a {@code table} by id<br><br>
+     *
+     * Throws:<br>
+     * {@link TableNotFoundException}<br>
+     * {@link RecordNotFoundLogError}
      *
      * @param table the table to delete from
      * @param id the id to search for
@@ -212,7 +220,11 @@ public class JDataManager {
 
     /**
      * Similar to {@link #deleteById(SemiClass, int)}, but instead of deleting a {@code single file} it deletes from an {@code id}
-     * to another {@code id} in a table
+     * to another {@code id} in a table<br><br>
+     *
+     * Throws:<br>
+     * {@link TableNotFoundException}
+     * {@link RecordNotFoundLogError}
      *
      * @param table the table to delete from
      * @param fromId where to start deleting data

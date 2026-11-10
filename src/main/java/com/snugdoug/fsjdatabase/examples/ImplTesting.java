@@ -22,12 +22,12 @@
 
 package com.snugdoug.fsjdatabase.examples;
 
+import com.snugdoug.fsjdatabase.exception.logError.TestAdvancedLogError;
 import com.snugdoug.fsjdatabase.exception.logError.InvalidDataKeySetLogError;
 import com.snugdoug.fsjdatabase.map.ParserHashMap;
 import com.snugdoug.fsjdatabase.map.ParserMap;
 import com.snugdoug.fsjdatabase.util.DefaultParserConverter;
 import com.snugdoug.fsjdatabase.util.Logger;
-import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 
 /**
  * This class contains things related to testing custom implementations such as {@link ParserMap}
@@ -53,7 +53,7 @@ public class ImplTesting {
 
         // Test LogError API
         Logger.error(new InvalidDataKeySetLogError("Test because thingy"));
-
+        Logger.error(new TestAdvancedLogError("Advanced test"));
 
         // create a new ParserMap
         ParserMap<String, String> parserMap = new ParserMap<>(new DefaultParserConverter()) {};
