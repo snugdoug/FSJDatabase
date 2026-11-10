@@ -55,6 +55,7 @@ public class FSJJsonWriter {
      * @param table the table to write to
      * @param id the id
      * @param autoIncrement if it auto increments or not
+     * @return whether it was successful or not
      */
     public static boolean write(LinkedHashMap<Object, Object> map, SemiClass table, int id, boolean autoIncrement) {
         boolean hadError = false;

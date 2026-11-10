@@ -22,5 +22,16 @@
 
 package com.snugdoug.fsjdatabase.util;
 
+/**
+ * Global values<br>
+ * Planned to be added soon, currently in concept
+ */
 public class Global {
+
+    /**
+     * Create a new instance
+     */
+    public Global() {
+
+    }
 }
