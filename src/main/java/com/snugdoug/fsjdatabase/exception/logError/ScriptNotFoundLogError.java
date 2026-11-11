@@ -40,8 +40,8 @@ public class ScriptNotFoundLogError extends AdvancedLogError {
     }
 
     /**
-     * Custom message
-     *
+     * Preset message
+     * @param theScript the script location
      */
     public ScriptNotFoundLogError(File theScript) {
         super("Could not find script file with name of: " + theScript.getName());

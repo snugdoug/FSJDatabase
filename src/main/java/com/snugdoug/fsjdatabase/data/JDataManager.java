@@ -955,6 +955,12 @@ public class JDataManager {
         }
     }
 
+    /**
+     * Parses script data into a JDM method that is ran<br>
+     * Example Script: {@code SELECT TableNumberOne WHERE id EQUAL 1}
+     * @param scriptData the script
+     * @return the result(s)
+     */
     @SuppressWarnings("all")
     public List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> parse(Script scriptData) {
 

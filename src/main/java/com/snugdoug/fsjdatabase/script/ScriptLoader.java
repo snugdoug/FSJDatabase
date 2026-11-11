@@ -38,9 +38,20 @@ import java.util.List;
  */
 public class ScriptLoader {
 
-    private final boolean addExt;
-    private final File file;
+    /**
+     * Whether to add the .fsjs extension
+     */
+    private boolean addExt;
 
+    /**
+     * The file that is the script
+     */
+    private File file;
+
+    /**
+     * Creates a new instance
+     * @param scriptName the script name
+     */
     public ScriptLoader(String scriptName) {
         this.addExt = !scriptName.endsWith(".fsjs");
 
@@ -50,6 +61,23 @@ public class ScriptLoader {
             this.file = new File(FSJDatabaseStructure.scriptDir() + "/" + scriptName + ".fsjs");
     }
 
+    /**
+     * Selects a script, so you can reuse the same instance
+     * @param scriptName the script name
+     */
+    public void select(String scriptName) {
+        this.addExt = !scriptName.endsWith(".fsjs");
+
+        if(!addExt)
+            this.file = new File(FSJDatabaseStructure.scriptDir() + "/" + scriptName);
+        else
+            this.file = new File(FSJDatabaseStructure.scriptDir() + "/" + scriptName + ".fsjs");
+    }
+
+    /**
+     * reads the script file and converts it to script
+     * @return the script
+     */
     public Script load() {
 
         List<String> lines;

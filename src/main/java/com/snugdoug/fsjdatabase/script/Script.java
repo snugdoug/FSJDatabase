@@ -41,7 +41,15 @@ import java.util.regex.Pattern;
  * SELECT TableNumberOne WHERE [id_field] LESS 1
  */
 public class Script {
+    /**
+     * The script lines/data
+     */
     private final List<String[]> script = new ArrayList<>();
+
+    /**
+     * Create a new script instance
+     * @param scriptData the script data
+     */
     public Script(String ...scriptData) {
         for (String data : scriptData) {
             Pattern pattern = Pattern.compile("\\$lit\\[\\s*(?<text>.*?)\\s*]");
@@ -69,6 +77,10 @@ public class Script {
         }
     }
 
+    /**
+     * Gets the script
+     * @return {@link #script}
+     */
     public List<String[]> getScript() {
         return script;
     }
