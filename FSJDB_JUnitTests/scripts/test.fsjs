@@ -1,0 +1,1 @@
+SELECT TableNumberOne WHERE id GREATER 1

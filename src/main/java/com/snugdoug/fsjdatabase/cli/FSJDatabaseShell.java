@@ -128,7 +128,22 @@ public class FSJDatabaseShell {
                 history.save();
                 Runtime.getRuntime().exit(0);
             }
-            String[] cmdArray = CommandParser.parse(line);
+            Object[] cmdArray = CommandParser.parse(line);
+            List<Object> cmdList = new ArrayList<>();
+            for(int i = 0; i < cmdArray.length; i++) {
+                String cmd = cmdArray[i].toString();
+
+                if(CommandParser.verifyIsNum(cmdArray[i].toString())) {
+                    ArrayList<Double> results = CommandParser.parseToDouble(cmd);
+                    if (results.getLast() == 0.0d)
+                        term.writer().println("Invalid syntax.");
+                    else
+                        cmdList.add(results.getFirst());
+                } else {
+                    cmdList.add(cmd);
+                }
+            }
+            cmdArray = cmdList.toArray();
 
             if (line.equals("quit") || line.equals("exit")) {
                 term.writer().println("Goodbye.");
@@ -143,7 +158,7 @@ public class FSJDatabaseShell {
                 term.writer().println("test-num <num-syntax>");
                 term.writer().println("quit|exit - exits shell");
                 term.writer().println("findById <table> <id> - gets data by id");
-                term.writer().println("findByValueContaining <table> <key> <value> - gets data by id");
+                term.writer().println("findByValueContaining | fvc <table> <key> <value> - gets data by id");
             }
 
             else if (cmdArray[0].equals("findById")) {
@@ -155,11 +170,11 @@ public class FSJDatabaseShell {
                         pathToMeta = Path.of(FSJDatabaseStructure.tablesDir() + "/" + cmdArray[1] + "/meta");
                         try {
 
-                            int id = Integer.parseInt(cmdArray[2]);
+                            int id = Integer.parseInt(cmdArray[2].toString());
                             term.writer().println("Table: " + cmdArray[1]);
                             term.writer().println("ID: " + cmdArray[2]);
 
-                            LinkedHashMap<Object, Object> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1]), id);
+                            LinkedHashMap<Object, Object> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1].toString()), id);
                             term.writer().println(getByIdResult);
                             TableMeta getByIdTableMeta = TableMeta.of(pathToMeta);
                         } catch (Exception e) {
@@ -186,8 +201,8 @@ public class FSJDatabaseShell {
 //                }
 //
 //            }
-            else if(cmdArray[0].equals("findByValueContaining")) {
-                if(!CommandParser.isValid(line, DataManager.class, "findByValueContaining", new DefaultParserConverter())) {
+            else if(cmdArray[0].equals("findByValueContaining") || cmdArray[0].equals("fvc")) {
+                if(!CommandParser.isValid(line, JDataManager.class, "findByValueContaining", new DefaultParserConverter())) {
                     term.writer().println("Invalid parameters, valid parameters are: findByValueContaining <table> <key> <value>");
                 }
                 else {
@@ -199,15 +214,8 @@ public class FSJDatabaseShell {
 
                         TableMeta meta = TableMeta.of(tableMetaPath);
                         List<LinkedHashMap<Object, Object>> dataByValueContaining = new ArrayList<>();
-                        if(CommandParser.verifyIsNum(cmdArray[3])) {
-                            List<Double> resultList = CommandParser.parseToDouble(cmdArray[3]);
-                            if(resultList.getLast() == 1.0d)
-                                dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], CommandParser.parseToDouble(cmdArray[3]).getFirst());
-                            else
-                                term.writer().println("Invalid syntax for $num[]");
-                        }
-                        else
-                            dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1]), cmdArray[2], cmdArray[3]);
+
+                        dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1].toString()), cmdArray[2], cmdArray[3]);
 
 
                         // You know I don't think we need that after I just examined my code...
@@ -230,8 +238,8 @@ public class FSJDatabaseShell {
                 }
 
             } else if(cmdArray[0].equals("test-num")) {
-                if(CommandParser.verifyIsNum(cmdArray[1])) {
-                    ArrayList<Double> results = CommandParser.parseToDouble(cmdArray[1]);
+                if(CommandParser.verifyIsNum(cmdArray[1].toString())) {
+                    ArrayList<Double> results = CommandParser.parseToDouble(cmdArray[1].toString());
                     if(results.getLast() == 0.0d)
                         term.writer().println("Invalid syntax.");
                     else

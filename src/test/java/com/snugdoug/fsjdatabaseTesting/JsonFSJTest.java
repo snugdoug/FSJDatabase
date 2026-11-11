@@ -21,18 +21,17 @@
  */
 
 package com.snugdoug.fsjdatabaseTesting;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseConfiguration;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseInitializer;
-import com.snugdoug.fsjdatabase.data.FSJDatabaseStructure;
-import com.snugdoug.fsjdatabase.data.JDataManager;
+import com.snugdoug.fsjdatabase.data.*;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
+import com.snugdoug.fsjdatabase.script.Script;
+import com.snugdoug.fsjdatabase.script.ScriptLoader;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import org.junit.jupiter.api.*;
 
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -168,5 +167,32 @@ public class JsonFSJTest {
         LinkedHashMap<Object, Object> result = dm.findById(TableNumberOne.class, 0);
         List<LinkedHashMap<Object, Object>> result2 = dm.findByValueContaining(TableNumberOne.class, "firstName", "alice#02");
         List<Map.Entry<Object, Object>> result3 = dm.findAllValuesOfKey(TableNumberOne.class, "firstName");
+    }
+
+    @Test
+    @DisplayName("Script Testing")
+    void testScripting() {
+
+        String literal = "$lit[Test Spaced Field] testafterlit $lit[another]";
+
+        String[] literalTest = literal.split(" ");
+
+
+
+
+
+        Script script = new Script("SELECT TableNumberOne WHERE id GREATER 1");
+        List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> result = dm.parse(script);
+
+        assertEquals(List.of(dm.findByFromIdToId(TableNumberOne.class, 1, JAutoIncrement.get(new SemiClass(TableNumberOne.class)) - 1)), result);
+
+        Logger.info("Result: " + result);
+
+        result = dm.parse(new ScriptLoader("test").load());
+
+        assertEquals(List.of(dm.findByFromIdToId(TableNumberOne.class, 1, JAutoIncrement.get(new SemiClass(TableNumberOne.class)) - 1)), result);
+
+
+        Logger.info("File Loaded result: " + result);
     }
 }

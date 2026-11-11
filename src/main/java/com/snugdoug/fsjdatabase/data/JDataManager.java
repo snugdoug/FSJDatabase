@@ -29,6 +29,7 @@ import com.snugdoug.fsjdatabase.exception.TableNotFoundException;
 import com.snugdoug.fsjdatabase.exception.logError.InvalidDataKeySetLogError;
 import com.snugdoug.fsjdatabase.exception.logError.NumberFormatLogError;
 import com.snugdoug.fsjdatabase.exception.logError.RecordNotFoundLogError;
+import com.snugdoug.fsjdatabase.script.Script;
 import com.snugdoug.fsjdatabase.util.GetTypeOf;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
@@ -619,6 +620,60 @@ public class JDataManager {
     }
 
     /**
+     * Similar to {@link #findById(SemiClass, int)}, but instead of finding a {@code single file} it finds from an {@code id}
+     * to another {@code id} in a table<br><br>
+     *
+     * Throws:<br>
+     * {@link TableNotFoundException}
+     * {@link RecordNotFoundLogError}
+     *
+     * @param table the table to get data from
+     * @param fromId where to start finding data
+     * @param toId where to stop finding data
+     * @return a linked hash map that has the id as the key, then the another linked hash map for the actual data
+     */
+    public LinkedHashMap<Integer, LinkedHashMap<Object, Object>> findByFromIdToId(SemiClass table, int fromId, int toId) {
+        if(!tableExists(table)) {
+            throw new TableNotFoundException(table);
+        }
+
+        LinkedHashMap<Integer, LinkedHashMap<Object, Object>> results = new LinkedHashMap<>();
+
+        for(int id = fromId; id <= toId; id++) {
+            Path targetFileLocation = Path.of(FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName() + "/" + id + ".json");
+            targetFileLocation = targetFileLocation.toAbsolutePath();
+
+            File targetFile = new File(targetFileLocation.toUri());
+
+            if (targetFile.exists()) {
+                LinkedHashMap<Object, Object> data = findById(table, id);
+                results.put(id, data);
+            }
+        }
+
+        // inverts so if its false it will be true (success) or if it's true it will be false (failure)
+        return results;
+    }
+
+    /**
+     * Similar to {@link #findById(SemiClass, int)}, but instead of finding a {@code single file} it finds from an {@code id}
+     * to another {@code id} in a table<br><br>
+     *
+     * Throws:<br>
+     * {@link TableNotFoundException}
+     * {@link RecordNotFoundLogError}
+     *
+     * @param table the table to get data from
+     * @param fromId where to start finding data
+     * @param toId where to stop finding data
+     * @return a linked hash map that has the id as the key, then the another linked hash map for the actual data
+     */
+    public LinkedHashMap<Integer, LinkedHashMap<Object, Object>> findByFromIdToId(Class table, int fromId, int toId) {
+        return findByFromIdToId(new SemiClass(table), fromId, toId);
+    }
+
+
+    /**
      * Gets data from a data file by id
      *
      * @param table the table to find the data file of
@@ -877,7 +932,7 @@ public class JDataManager {
      * @param table the table
      * @return whether it exists or not
      */
-    protected boolean tableExists(SemiClass table) {
+    public boolean tableExists(SemiClass table) {
         return FSJDatabaseInitializer.tables.contains(table) | FSJDatabaseInitializer.freeTables.contains(table);
     }
 
@@ -898,6 +953,126 @@ public class JDataManager {
         } catch (NumberFormatException e) {
             return null;
         }
+    }
+
+    @SuppressWarnings("all")
+    public List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> parse(Script scriptData) {
+
+        List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> result = new ArrayList<>();
+
+        for(String[] script : scriptData.getScript()) {
+
+
+            String mainOperation = switch (script[0]) {
+                case "SELECT" -> "SELECT";
+                case null, default -> "NONE";
+            };
+
+            if (mainOperation.equals("NONE")) {
+                Logger.error("Failed to parse FSJS. Reason: Invalid main operation, operation: " + script[1]);
+                return new ArrayList<>();
+            }
+
+            if (mainOperation.equals("SELECT")) {
+                if (script.length < 2) {
+                    Logger.error("SELECT operation without table.");
+                    return new ArrayList<>();
+                }
+                SemiClass table = SemiClass.nameOf(script[1]);
+                if (!(new JDataManager().tableExists(table))) {
+                    Logger.error("Invalid table " + table);
+                    return new ArrayList<>();
+                }
+
+                if (script.length < 3) {
+                    Logger.error("Table selected without an operation.");
+                    return new ArrayList<>();
+                }
+
+                String tableOperation = switch (script[2]) {
+                    case "WHERE" -> "WHERE";
+                    case null, default -> "NONE";
+                };
+
+                if (tableOperation.equals("NONE")) {
+                    Logger.error("Unknown table operation: " + script[2]);
+                    return new ArrayList<>();
+                }
+
+                if (tableOperation.equals("WHERE")) {
+
+                    if (script.length < 4) {
+                        Logger.error("WHERE operation without a specifier.");
+                        return new ArrayList<>();
+                    }
+
+
+//                    String comparisonType = switch (script[3]) {
+//                        case "ID" -> "ID";
+//                        case null, default -> "NONE";
+//                    };
+
+//                    if (comparisonType.equals("NONE")) {
+//                        Logger.error("Unknown WHERE operation: " + script[3]);
+//                        return new ArrayList<>();
+//                    }
+
+                    if (getTableColumns(table, false).contains(script[3])) {
+
+
+
+                        if(TableMeta.of(table).getIdField().getName().equals(script[3])) {
+                            if (script.length < 5) {
+                                Logger.error("ID operation without a comparison specifier.");
+                                return new ArrayList<>();
+                            }
+
+                            String comparison = switch (script[4]) {
+                                case "EQUAL" -> "EQUAL";
+                                case "LESS" -> "LESS";
+                                case "GREATER" -> "GREATER";
+                                case null, default -> "NONE";
+                            };
+
+                            if (comparison.equals("NONE")) {
+                                Logger.error("Unknown comparison: " + script[4]);
+                                return new ArrayList<>();
+                            }
+
+                            int id = -315;
+
+                            try {
+                                id = Integer.parseInt(script[5]);
+                            } catch (Exception e) {
+                                Logger.error("Not a number: " + script[5]);
+                                return new ArrayList<>();
+                            }
+
+                            if (comparison.equals("EQUAL")) {
+                                LinkedHashMap<Object, Object> data = findById(table, id);
+                                LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
+                                finalData.put(id, data);
+
+                                result.add(finalData);
+                            } else if (comparison.equals("LESS")) {
+                                result.add(findByFromIdToId(table, 0, id));
+
+                            } else if (comparison.equals("GREATER")) {
+                                result.add(findByFromIdToId(table, id, JAutoIncrement.get(table) + 1));
+                            }
+                        }
+
+
+                    } else {
+                        Logger.error("Column not found in table: " + script[3]);
+                        return new ArrayList<>();
+                    }
+                }
+
+            }
+        }
+
+        return result;
     }
 
 }

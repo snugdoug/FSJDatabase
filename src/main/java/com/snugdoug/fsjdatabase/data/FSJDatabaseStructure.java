@@ -63,6 +63,11 @@ public class FSJDatabaseStructure {
     protected static String dataDir;
 
     /**
+     * Script directory: root/scripts
+     */
+    protected static String scriptDir;
+
+    /**
      * Tables directory root/tables
      */
     protected static String tablesDir;
@@ -127,11 +132,13 @@ public class FSJDatabaseStructure {
     public static void createStructure(Path rootDirectory, String rootFSJDatabaseDirectoryName) {
         root = rootDirectory + "/" + rootFSJDatabaseDirectoryName;
         dataDir = root + "/" + "data";
+        scriptDir = root + "/" + "scripts";
         tablesDir = root + "/" + "tables";
         autoIncrementLoc = dataDir + "/autoIncrement.fsj";
 
         FileManager.mkdir(root);
         FileManager.mkdir(dataDir);
+        FileManager.mkdir(scriptDir);
         FileManager.mkdir(tablesDir);
         FileManager.createFile(dataDir + "/autoIncrement.fsj");
         FileManager.createFile(dataDir + "/autoIncrement.json");
@@ -479,6 +486,14 @@ public class FSJDatabaseStructure {
      */
     public static String dataDir() {
         return dataDir;
+    }
+
+    /**
+     * Gets the script directory
+     * @return {@link #scriptDir}
+     */
+    public static String scriptDir() {
+        return scriptDir;
     }
 
     /**

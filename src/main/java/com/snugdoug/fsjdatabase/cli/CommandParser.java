@@ -73,8 +73,10 @@ public class CommandParser {
      * @param methodName The method name (Example: findById)
      * @param converter The converter, this is a utility to help parse data lines.
      * @return gives true or false, for if its valid or invalid.
+     * @deprecated this uses the old DataManager format, please use the new isValid!
      */
-    public static boolean isValid(String cmd, Class<?> classWithMethod, String methodName, ParserConverter converter) {
+    @Deprecated
+    public static boolean isValidOld(String cmd, Class<?> classWithMethod, String methodName, ParserConverter converter) {
         Method finalMethod = null;
 
         for (Method method : classWithMethod.getDeclaredMethods()) {
@@ -114,6 +116,60 @@ public class CommandParser {
                         return false;
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Checks for if a command is {@code valid}
+     *
+     * @param cmd The command, example: findByValueContaining TableNumberOne firstName Alice
+     * @param classWithMethod The class to check for the method (Example: {@link JDataManager})
+     * @param methodName The method name (Example: findById)
+     * @param converter The converter, this is a utility to help parse data lines.
+     * @return gives true or false, for if its valid or invalid.
+     */
+    public static boolean isValid(String cmd, Class<?> classWithMethod, String methodName, ParserConverter converter) {
+        Method finalMethod = null;
+
+        for (Method method : classWithMethod.getDeclaredMethods()) {
+            if (method.getName().equals(methodName)) {
+                finalMethod = method;
+            }
+        }
+
+        if (cmd == null || cmd.isEmpty()) {
+            return false;
+        }
+
+        if (finalMethod == null) {
+            throw new RuntimeException("Invalid class method");
+        }
+
+        String[] cmdSplit = parse(cmd);
+
+        List<String> cmdSplitRemoval;
+        cmdSplitRemoval = Arrays.stream(cmdSplit).collect(Collectors.toList());
+
+        cmdSplitRemoval.removeFirst();
+
+        cmdSplit = cmdSplitRemoval.toArray(new String[0]);
+
+        Type[] methodTypes = finalMethod.getGenericParameterTypes();
+
+        if (cmdSplit.length != methodTypes.length) {
+            return false;
+        }
+
+        for (int i = 0; i < cmdSplit.length; i++) {
+            String currentObj = cmdSplit[i];
+            Type currentMethodObj = methodTypes[i];
+            try {
+                if(!GetTypeOf.get(converter.convert(currentObj, TypeToken.of(currentMethodObj))).equals(currentMethodObj))
+                    return false;
             } catch (Exception e) {
                 e.printStackTrace();
             }
