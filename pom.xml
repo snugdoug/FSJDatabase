@@ -6,7 +6,7 @@
 
     <groupId>com.snugdoug.fsjdatabase</groupId>
     <artifactId>FSJDatabase</artifactId>
-    <version>1.5.5_RELEASE</version>
+    <version>2.5.5_RELEASE</version>
 
     <dependencies>
         <dependency>

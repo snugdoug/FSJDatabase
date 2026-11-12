@@ -24,6 +24,8 @@ package com.snugdoug.fsjdatabase.cli;
 
 import com.snugdoug.fsjdatabase.data.*;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
+import com.snugdoug.fsjdatabase.script.Script;
+import com.snugdoug.fsjdatabase.script.ScriptLoader;
 import com.snugdoug.fsjdatabase.util.DefaultParserConverter;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
@@ -35,6 +37,7 @@ import org.jline.terminal.TerminalBuilder;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 
 // TODO: Make this a separate project at some point and also fix this to work with the new JSON system
 
@@ -56,6 +59,7 @@ public class FSJDatabaseShell {
      * @param args the arguments
      * @throws IOException due to TerminalBuilder.builder().build(); and history.save(); throwing IOExceptions
      */
+    @SuppressWarnings("deprecation")
     public static void main(String[] args) throws IOException {
         Path pathToMeta;
 
@@ -71,12 +75,30 @@ public class FSJDatabaseShell {
 
         String pathToDB = args[0];
 
+        String dbType;
+
+        if(!(args.length < 2))
+            dbType = args[1];
+        else {
+            dbType = "--new";
+        }
+
         Path pathToDBFile = Path.of(pathToDB);
         if (!pathToDBFile.toFile().isDirectory() || !pathToDBFile.toFile().exists()) {
             System.out.println("The path " + pathToDB + " is not a directory or doesn't exist");
             Runtime.getRuntime().exit(1);
         }
 
+        boolean newDb = true;
+
+        if (dbType.equals("--old")) {
+            newDb = false;
+        } else {
+            if(!dbType.equals("--new")) {
+                System.out.println("Unknown database type param: " + dbType);
+                Runtime.getRuntime().exit(1);
+            }
+        }
         pathToDBFile = pathToDBFile.toAbsolutePath();
 
         String pathToAutoIncrement = pathToDB + "/data/autoIncrement.fsj";
@@ -91,7 +113,8 @@ public class FSJDatabaseShell {
 
         FSJDatabaseInitializer init = new FSJDatabaseInitializer(true);
 
-        JDataManager data = new JDataManager();
+        DataManager dm = new DataManager();
+        JDataManager jdm = new JDataManager();
 
         Scanner scan = new Scanner(System.in);
 
@@ -119,6 +142,9 @@ public class FSJDatabaseShell {
             }
         }));
 
+        Scanner scanner = new Scanner(System.in);
+
+        if(!newDb) {
         while (true) {
             String line = "it didn't work if you see this";
             try {
@@ -130,10 +156,10 @@ public class FSJDatabaseShell {
             }
             Object[] cmdArray = CommandParser.parse(line);
             List<Object> cmdList = new ArrayList<>();
-            for(int i = 0; i < cmdArray.length; i++) {
+            for (int i = 0; i < cmdArray.length; i++) {
                 String cmd = cmdArray[i].toString();
 
-                if(CommandParser.verifyIsNum(cmdArray[i].toString())) {
+                if (CommandParser.verifyIsNum(cmdArray[i].toString())) {
                     ArrayList<Double> results = CommandParser.parseToDouble(cmd);
                     if (results.getLast() == 0.0d)
                         term.writer().println("Invalid syntax.");
@@ -149,9 +175,7 @@ public class FSJDatabaseShell {
                 term.writer().println("Goodbye.");
                 term.writer().flush();
                 break;
-            }
-
-            else if (line.equals("help")) {
+            } else if (line.equals("help")) {
                 term.writer().println("FSJDatabase Shell Command List");
                 term.writer().println("To represent a number (double) value wrap the number in $num[<NUM>]");
                 term.writer().println("help - shows this");
@@ -159,9 +183,7 @@ public class FSJDatabaseShell {
                 term.writer().println("quit|exit - exits shell");
                 term.writer().println("findById <table> <id> - gets data by id");
                 term.writer().println("findByValueContaining | fvc <table> <key> <value> - gets data by id");
-            }
-
-            else if (cmdArray[0].equals("findById")) {
+            } else if (cmdArray[0].equals("findById")) {
                 if (cmdArray.length < 3) {
                     term.writer().println("Invalid arguments for getById, correct arguments are: findById <table> <id>");
                 } else {
@@ -174,7 +196,7 @@ public class FSJDatabaseShell {
                             term.writer().println("Table: " + cmdArray[1]);
                             term.writer().println("ID: " + cmdArray[2]);
 
-                            LinkedHashMap<Object, Object> getByIdResult = data.findById(SemiClass.nameOf(cmdArray[1].toString()), id);
+                            LinkedHashMap<Object, Object> getByIdResult = dm.findById(SemiClass.nameOf(cmdArray[1].toString()), id);
                             term.writer().println(getByIdResult);
                             TableMeta getByIdTableMeta = TableMeta.of(pathToMeta);
                         } catch (Exception e) {
@@ -201,21 +223,20 @@ public class FSJDatabaseShell {
 //                }
 //
 //            }
-            else if(cmdArray[0].equals("findByValueContaining") || cmdArray[0].equals("fvc")) {
-                if(!CommandParser.isValid(line, JDataManager.class, "findByValueContaining", new DefaultParserConverter())) {
+            else if (cmdArray[0].equals("findByValueContaining") || cmdArray[0].equals("fvc")) {
+                if (!CommandParser.isValid(line, DataManager.class, "findByValueContaining", new DefaultParserConverter())) {
                     term.writer().println("Invalid parameters, valid parameters are: findByValueContaining <table> <key> <value>");
-                }
-                else {
+                } else {
                     Path tableMetaPath = Path.of(FSJDatabaseStructure.tablesDir() + "/" + cmdArray[1] + "/meta");
 
-                    if(validTableMetaPath(tableMetaPath)) {
+                    if (validTableMetaPath(tableMetaPath)) {
 
                         Logger.debug("Tests");
 
                         TableMeta meta = TableMeta.of(tableMetaPath);
-                        List<LinkedHashMap<Object, Object>> dataByValueContaining = new ArrayList<>();
+                        List<LinkedHashMap<?, ?>> dataByValueContaining = new ArrayList<>();
 
-                        dataByValueContaining = data.findByValueContaining(SemiClass.nameOf(cmdArray[1].toString()), cmdArray[2], cmdArray[3]);
+                        dataByValueContaining = dm.findByValueContaining(SemiClass.nameOf(cmdArray[1].toString()), cmdArray[2].toString(), cmdArray[3].toString());
 
 
                         // You know I don't think we need that after I just examined my code...
@@ -223,9 +244,7 @@ public class FSJDatabaseShell {
                         dataByValueContaining.forEach((hashmap) -> {
 
 
-
-
-                            String formatted = hashmap.get(data.getTableIdName(SemiClass.nameOf(meta.getTableName()))) + ": " + hashmap.toString()
+                            String formatted = hashmap.get(dm.getTableIdName(SemiClass.nameOf(meta.getTableName()))) + ": " + hashmap.toString()
                                     .replace("{", "")
                                     .replace("}", "");
 
@@ -237,26 +256,68 @@ public class FSJDatabaseShell {
                     }
                 }
 
-            } else if(cmdArray[0].equals("test-num")) {
-                if(CommandParser.verifyIsNum(cmdArray[1].toString())) {
+            } else if (cmdArray[0].equals("test-num")) {
+                if (CommandParser.verifyIsNum(cmdArray[1].toString())) {
                     ArrayList<Double> results = CommandParser.parseToDouble(cmdArray[1].toString());
-                    if(results.getLast() == 0.0d)
+                    if (results.getLast() == 0.0d)
                         term.writer().println("Invalid syntax.");
                     else
                         term.writer().println(results.getFirst());
                 } else {
                     term.writer().println("Invalid syntax.");
                 }
-            }
-
-            else {
+            } else {
                 term.writer().println("Invalid Command '" + line + "', use the command 'help' to see available commands");
             }
+        }
+
+        } else {
+            while(true) {
+                String line = "it didn't work if you see this";
+                try {
+                    line = reader.readLine("fsjdb > ");
+                } catch (UserInterruptException | EndOfFileException e) {
+                    term.writer().println("Goodbye.");
+                    history.save();
+                    Runtime.getRuntime().exit(0);
+                }
+                Object[] cmdArray = CommandParser.parse(line);
+                List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> result = new ArrayList<>();
+                boolean noOperation = false;
+                if(cmdArray[0].toString().equals("load")) {
+                    if(cmdArray[1].toString().isBlank()) {
+                        System.out.println("Invalid syntax for load, please use load <script_name>");
+                    } else {
+                        result = jdm.parse(new ScriptLoader(cmdArray[1].toString()).load());
+                    }
+                } else if(cmdArray[0].toString().equals("help")) {
+                    term.writer().println("--- FSJDatabaseShell: Commands ---");
+                    term.writer().println("help       | shows this");
+                    term.writer().println("load       | loads a script file");
+                    term.writer().println("(anything) | parses FSJS directly from shell");
+                    noOperation = true;
+                } else if(cmdArray[0].toString().equals("exit")) {
+                    term.writer().println("Goodbye.");
+                    term.writer().flush();
+                    break;
+                } else {
+                    result = jdm.parse(new Script(line));
+                }
+
+                if(!noOperation) {
+                    term.writer().println("--- RESULTS ---");
+                    AtomicReference<Integer> operationNum = new AtomicReference<Integer>(1);
+                    result.forEach((o) -> {
+                        term.writer().println("\nFind Operation " + operationNum + ":");
+                        operationNum.getAndSet(operationNum.get() + 1);
+                        o.forEach(((integer, map) -> {
+                            term.writer().println(integer + ": " + map);
+                        }));
+                    });
+                }
 
 
-
-            // TODO: add the rest of the methods
-
+            }
         }
     }
 

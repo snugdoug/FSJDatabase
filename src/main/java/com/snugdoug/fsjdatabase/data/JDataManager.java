@@ -22,6 +22,7 @@
 
 package com.snugdoug.fsjdatabase.data;
 
+import com.snugdoug.fsjdatabase.cli.CommandParser;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonReader;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
@@ -54,7 +55,7 @@ import java.util.stream.Stream;
  * <h3>Read</h3>
  * {@link #findById(SemiClass, int)} - Finds data in a table by id<br>
  * {@link #findByValueContaining(SemiClass, Object, Object)} - Finds data in a table by a value containing<br>
- * {@link #findAllValuesOfKey(SemiClass, String)} - Gets all values of a key from a table<br>
+ * {@link #findAllValuesOfKey(SemiClass, Object)} - Gets all values of a key from a table<br>
  * <h3>Update</h3>
  * {@link #updateById(SemiClass, LinkedHashMap)} - Updates an entire record in the specified table<br>
  * {@link #updateValueById(SemiClass, int, Object, Object)} - Updates a value in a record by id inside the specified table<br>
@@ -721,6 +722,7 @@ public class JDataManager {
                                 LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
 
                                 if (map.entrySet().contains(Map.entry(key, finalValue))) {
+                                    map.put(getTableIdName(table), id);
                                     finalContent.add(map);
                                 }
                             }
@@ -753,7 +755,7 @@ public class JDataManager {
      * The key value in the Map.Entry is the id.<br>
      * The value of Map.Entry is the value
      */
-    public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(SemiClass table, String key) {
+    public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(SemiClass table, Object key) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
         }
@@ -791,7 +793,7 @@ public class JDataManager {
      * The key value in the Map.Entry is the id.<br>
      * The value of Map.Entry is the value
      */
-    public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(Class table, String key) {
+    public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(Class table, Object key) {
         return findAllValuesOfKey(new SemiClass(table), key);
     }
 
@@ -966,16 +968,47 @@ public class JDataManager {
 
         List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> result = new ArrayList<>();
 
-        for(String[] script : scriptData.getScript()) {
+        List<Object[]> finalScript = new ArrayList<>();
+
+        int iter = 0;
+        for(Object[] script : scriptData.getScript()) {
+
+            List<Object> scriptList = new ArrayList<>();
+            for (int i = 0; i < script.length; i++) {
+                String cmd = script[i].toString();
+
+                if (CommandParser.verifyIsNum(script[i].toString())) {
+                    ArrayList<Double> results = CommandParser.parseToDouble(cmd);
+                    if (results.getLast() == 0.0d)
+                        Logger.error("Failed to convert.");
+                    else
+                        scriptList.add(results.getFirst());
+                } else {
+                    scriptList.add(cmd);
+                }
+            }
+            Logger.debug("Iter: " + iter + "\nScriptList: " + scriptList);
+            finalScript.add(iter, scriptList.toArray());
+            iter++;
+        }
+
+        for(Object[] script : finalScript) {
 
 
-            String mainOperation = switch (script[0]) {
+
+            if(script.length == 0) {
+                Logger.error("Script line length is equal to 0, skipping.");
+                continue;
+            }
+
+
+            String mainOperation = switch (script[0].toString()) {
                 case "SELECT" -> "SELECT";
                 case null, default -> "NONE";
             };
 
             if (mainOperation.equals("NONE")) {
-                Logger.error("Failed to parse FSJS. Reason: Invalid main operation, operation: " + script[1]);
+                Logger.error("Failed to parse FSJS. Reason: Invalid main operation, operation: " + script[0]);
                 return new ArrayList<>();
             }
 
@@ -984,7 +1017,7 @@ public class JDataManager {
                     Logger.error("SELECT operation without table.");
                     return new ArrayList<>();
                 }
-                SemiClass table = SemiClass.nameOf(script[1]);
+                SemiClass table = SemiClass.nameOf(script[1].toString());
                 if (!(new JDataManager().tableExists(table))) {
                     Logger.error("Invalid table " + table);
                     return new ArrayList<>();
@@ -995,8 +1028,9 @@ public class JDataManager {
                     return new ArrayList<>();
                 }
 
-                String tableOperation = switch (script[2]) {
+                String tableOperation = switch (script[2].toString()) {
                     case "WHERE" -> "WHERE";
+                    case "DELETE" -> "DELETE";
                     case null, default -> "NONE";
                 };
 
@@ -1013,27 +1047,173 @@ public class JDataManager {
                     }
 
 
-//                    String comparisonType = switch (script[3]) {
-//                        case "ID" -> "ID";
-//                        case null, default -> "NONE";
-//                    };
-
-//                    if (comparisonType.equals("NONE")) {
-//                        Logger.error("Unknown WHERE operation: " + script[3]);
-//                        return new ArrayList<>();
-//                    }
-
                     if (getTableColumns(table, false).contains(script[3])) {
 
 
-
-                        if(TableMeta.of(table).getIdField().getName().equals(script[3])) {
-                            if (script.length < 5) {
+                        if (TableMeta.of(table).getIdField().getName().equals(script[3])) {
+                            if (script.length < 4) {
                                 Logger.error("ID operation without a comparison specifier.");
                                 return new ArrayList<>();
                             }
 
-                            String comparison = switch (script[4]) {
+                            String comparison = switch (script[4].toString()) {
+                                case "EQUAL" -> "EQUAL";
+                                case "LESS" -> "LESS";
+                                case "GREATER" -> "GREATER";
+                                case "VCONTAIN" -> "VCONTAIN";
+                                case "ALLKV" -> "ALLKV";
+                                case null, default -> "NONE";
+                            };
+
+                            if (comparison.equals("NONE")) {
+                                Logger.error("Unknown comparison: " + script[4]);
+                                return new ArrayList<>();
+                            }
+
+                            boolean skipId = false;
+
+                            if (comparison.equals("ALLKV")) {
+
+                                LinkedList<Map.Entry<Object, Object>> data = findAllValuesOfKey(table, script[3]);
+                                LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
+
+                                data.forEach((entry) -> {
+                                    LinkedHashMap<Integer, LinkedHashMap<Object, Object>> temp = new LinkedHashMap<>();
+                                    LinkedHashMap<Object, Object> temp2 = new LinkedHashMap<>();
+                                    temp2.put(script[3], entry.getValue());
+                                    try {
+                                        finalData.put((int) Double.parseDouble(entry.getKey().toString()), temp2);
+                                    } catch (NumberFormatException e) {
+                                        Logger.error("Could not convert number");
+                                    }
+                                });
+                                skipId = true;
+                                result.add(finalData);
+                            } else if (comparison.equals("VCONTAIN")) {
+                                if (script.length < 6) {
+                                    Logger.error("No value specifer for VCONTAIN");
+                                }
+
+                                LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
+
+                                Logger.debug("Value: " + script[5] + "Key: " + script[3]);
+                                findByValueContaining(table, script[3], script[5]).forEach((map) -> {
+                                    try {
+
+                                        finalData.put((int) Double.parseDouble(map.get(getTableIdName(table)).toString()), map);
+                                    } catch (NumberFormatException e) {
+                                        Logger.error("Failed to convert number");
+                                    }
+                                });
+
+                                skipId = true;
+                                result.add(finalData);
+                            }
+
+                            if(!skipId) {
+                                int id = -315;
+
+                                try {
+                                    id = Integer.parseInt(script[5].toString().replaceAll("[.](?<=\\.).*$", ""));
+                                } catch (Exception e) {
+                                    Logger.error("Not a number: " + script[5]);
+                                    return new ArrayList<>();
+                                }
+
+                                if (comparison.equals("EQUAL")) {
+                                    LinkedHashMap<Object, Object> data = findById(table, id);
+                                    LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
+                                    finalData.put(id, data);
+
+                                    result.add(finalData);
+                                } else if (comparison.equals("LESS")) {
+                                    result.add(findByFromIdToId(table, 0, id));
+
+                                } else if (comparison.equals("GREATER")) {
+                                    result.add(findByFromIdToId(table, id, JAutoIncrement.get(table) + 1));
+                                }
+                                if (comparison.equals("NONE")) {
+                                    Logger.error("Unknown comparison: " + script[4]);
+                                    return new ArrayList<>();
+                                }
+                            }
+
+                        } else {
+                            if (script.length < 5) {
+                                Logger.error("FIELD operation without a comparison specifier.");
+                                return new ArrayList<>();
+                            }
+
+                            String comparison = switch (script[4].toString()) {
+                                case "ALLKV" -> "ALLKV";
+                                case "VCONTAIN" -> "VCONTAIN";
+                                case null, default -> "NONE";
+                            };
+
+                            if (comparison.equals("NONE")) {
+                                Logger.error("Unknown comparison: " + script[4]);
+                                return new ArrayList<>();
+                            }
+
+                            if (comparison.equals("ALLKV")) {
+
+                                LinkedList<Map.Entry<Object, Object>> data = findAllValuesOfKey(table, script[3]);
+                                LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
+
+                                data.forEach((entry) -> {
+                                    LinkedHashMap<Integer, LinkedHashMap<Object, Object>> temp = new LinkedHashMap<>();
+                                    LinkedHashMap<Object, Object> temp2 = new LinkedHashMap<>();
+                                    temp2.put(script[3], entry.getValue());
+                                    try {
+                                        finalData.put((int) Double.parseDouble(entry.getKey().toString()), temp2);
+                                    } catch (NumberFormatException e) {
+                                        Logger.error("Could not convert number");
+                                    }
+                                });
+
+
+                                result.add(finalData);
+                            } else if (comparison.equals("VCONTAIN")) {
+                                if (script.length < 6) {
+                                    Logger.error("No value specifer for VCONTAIN");
+                                }
+
+                                LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
+
+                                findByValueContaining(table, script[3], script[5]).forEach((map) -> {
+                                    try {
+
+                                        finalData.put((int) Double.parseDouble(map.get(getTableIdName(table)).toString()), map);
+                                    } catch (NumberFormatException e) {
+                                        Logger.error("Failed to convert number");
+                                    }
+                                });
+
+                                result.add(finalData);
+                            }
+                        }
+
+
+                    } else {
+                        Logger.error("Column not found in table: " + script[3]);
+                        return new ArrayList<>();
+                    }
+                } else if (tableOperation.equals("DELETE")) {
+
+                    if (script.length < 4) {
+                        Logger.error("DELETE operation without a specifier.");
+                        return new ArrayList<>();
+                    }
+
+
+                    if (getTableColumns(table, false).contains(script[3])) {
+                        if (TableMeta.of(table).getIdField().getName().equals(script[3])) {
+                            if (script.length < 4) {
+                                Logger.error("ID operation without a comparison specifier.");
+                                return new ArrayList<>();
+                            }
+
+                            String comparison = switch (script[4].toString()) {
                                 case "EQUAL" -> "EQUAL";
                                 case "LESS" -> "LESS";
                                 case "GREATER" -> "GREATER";
@@ -1048,33 +1228,44 @@ public class JDataManager {
                             int id = -315;
 
                             try {
-                                id = Integer.parseInt(script[5]);
+                                id = Integer.parseInt(script[5].toString().replaceAll("[.](?<=\\.).*$", ""));
                             } catch (Exception e) {
                                 Logger.error("Not a number: " + script[5]);
                                 return new ArrayList<>();
                             }
 
                             if (comparison.equals("EQUAL")) {
-                                LinkedHashMap<Object, Object> data = findById(table, id);
-                                LinkedHashMap<Integer, LinkedHashMap<Object, Object>> finalData = new LinkedHashMap<>();
-                                finalData.put(id, data);
+                                deleteById(table, id);
+                            }
+                            // The other methods would be here (GREATER, LESS) but I find them to dangerous.
+                            // Due to the face they can wipe a whole table with it.
+                        } else {
+                            if (script.length < 5) {
+                                Logger.error("FIELD operation without a comparison specifier.");
+                                return new ArrayList<>();
+                            }
 
-                                result.add(finalData);
-                            } else if (comparison.equals("LESS")) {
-                                result.add(findByFromIdToId(table, 0, id));
+                            String comparison = switch (script[4].toString()) {
+                                case "VCONTAIN" -> "VCONTAIN";
+                                case null, default -> "NONE";
+                            };
 
-                            } else if (comparison.equals("GREATER")) {
-                                result.add(findByFromIdToId(table, id, JAutoIncrement.get(table) + 1));
+                            if (comparison.equals("NONE")) {
+                                Logger.error("Unknown comparison: " + script[4]);
+                                return new ArrayList<>();
+                            }
+
+                            if (comparison.equals("VCONTAIN")) {
+                                if (script.length < 6) {
+                                    Logger.error("No value specifer for VCONTAIN");
+                                }
+
+                                deleteContaining(table, script[3].toString(), script[5].toString());
                             }
                         }
 
-
-                    } else {
-                        Logger.error("Column not found in table: " + script[3]);
-                        return new ArrayList<>();
                     }
                 }
-
             }
         }
 

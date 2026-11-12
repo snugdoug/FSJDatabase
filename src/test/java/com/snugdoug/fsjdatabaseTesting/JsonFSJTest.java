@@ -194,5 +194,10 @@ public class JsonFSJTest {
 
 
         Logger.info("File Loaded result: " + result);
+
+        // num test
+        Script numTest = new Script("SELECT TableNumberOne WHERE id VCONTAIN $num[105]");
+        Logger.info("Num test: " + dm.parse(numTest));
+        Logger.info("Regular usage with num: " + dm.findByValueContaining(TableNumberOne.class, "id", 105));
     }
 }

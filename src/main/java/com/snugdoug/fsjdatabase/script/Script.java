@@ -22,6 +22,7 @@
 
 package com.snugdoug.fsjdatabase.script;
 
+import com.snugdoug.fsjdatabase.cli.CommandParser;
 import com.snugdoug.fsjdatabase.util.Logger;
 
 import java.util.ArrayList;
@@ -44,18 +45,25 @@ public class Script {
     /**
      * The script lines/data
      */
-    private final List<String[]> script = new ArrayList<>();
+    private final List<Object[]> script = new ArrayList<>();
 
     /**
      * Create a new script instance
      * @param scriptData the script data
      */
     public Script(String ...scriptData) {
-        for (String data : scriptData) {
-            Pattern pattern = Pattern.compile("\\$lit\\[\\s*(?<text>.*?)\\s*]");
-            Matcher matcher = pattern.matcher(data);
 
-            List<String> finalResult = new ArrayList<>();
+
+        for (String data : scriptData) {
+
+
+            Pattern pattern = Pattern.compile("\\$lit\\[\\s*(?<text>.*?)\\s*]");
+            Pattern numPattern = Pattern.compile("\\$num\\[\\s*(?<text>.*?)\\s*]");
+
+            Matcher matcher = pattern.matcher(data);
+            Matcher numMatcher = numPattern.matcher(data);
+
+            List<Object> finalResult = new ArrayList<>();
             int lastEnd = 0;
             while (matcher.find()) {
                 // text before the match (non-literal part)
@@ -72,7 +80,12 @@ public class Script {
                 finalResult.addAll(Arrays.asList(tail.split("\\s+")));
             }
 
-            script.add(finalResult.toArray(String[]::new));
+
+
+
+
+
+            script.add(finalResult.toArray(Object[]::new));
             Logger.debug("Script: " + finalResult);
         }
     }
@@ -81,7 +94,7 @@ public class Script {
      * Gets the script
      * @return {@link #script}
      */
-    public List<String[]> getScript() {
+    public List<Object[]> getScript() {
         return script;
     }
 }
