@@ -36,10 +36,10 @@ import java.util.regex.Pattern;
  * Creates FSJDBS scripts that can be passed to JDataManager
  * FSJDBS: File Structure Java Database Script
  * <h2>General Format</h2>
- * Main information will be on the wiki once all the basic methods have been added, but here are some examples:
- * SELECT TableNumberOne WHERE [id_field] EQUAL 1
- * SELECT TableNumberOne WHERE [id_field] GREATER 1
- * SELECT TableNumberOne WHERE [id_field] LESS 1
+ * Main information is on the wiki, though, here are some examples:
+ * SELECT TableNumberOne WHERE [id_field] EQUAL 1<br>
+ * SELECT TableNumberOne WHERE [id_field] GREATER 1<br>
+ * SELECT TableNumberOne WHERE [id_field] LESS 1<br>
  */
 public class Script {
     /**

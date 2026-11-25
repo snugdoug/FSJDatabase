@@ -23,6 +23,7 @@
 package com.snugdoug.fsjdatabaseTesting;
 import com.snugdoug.fsjdatabase.data.*;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
+import com.snugdoug.fsjdatabase.plugin.PluginLoader;
 import com.snugdoug.fsjdatabase.script.Script;
 import com.snugdoug.fsjdatabase.script.ScriptLoader;
 import com.snugdoug.fsjdatabase.util.Logger;
@@ -43,6 +44,7 @@ public class JsonFSJTest {
     static void init() {
         conf =  new FSJDatabaseConfiguration().setRootFSJDatabaseDirectoryName("FSJDB_JUnitTests").setDebug(true);
         init = new FSJDatabaseInitializer(JsonFSJTest.class);
+        PluginLoader pl = new PluginLoader(JsonFSJTest.class);
         Logger.info("Tables: " + FSJDatabaseInitializer.getTables());
         Logger.info("FreeTables: " + FSJDatabaseInitializer.getFreeTables());
         dm = new JDataManager();
@@ -164,6 +166,7 @@ public class JsonFSJTest {
     @Disabled(value = "testFindingData ignored. Reason: Not finished.")
     void testFindingData() {
         // Finding
+
         LinkedHashMap<Object, Object> result = dm.findById(TableNumberOne.class, 0);
         List<LinkedHashMap<Object, Object>> result2 = dm.findByValueContaining(TableNumberOne.class, "firstName", "alice#02");
         List<Map.Entry<Object, Object>> result3 = dm.findAllValuesOfKey(TableNumberOne.class, "firstName");
@@ -199,5 +202,11 @@ public class JsonFSJTest {
         Script numTest = new Script("SELECT TableNumberOne WHERE id VCONTAIN $num[105]");
         Logger.info("Num test: " + dm.parse(numTest));
         Logger.info("Regular usage with num: " + dm.findByValueContaining(TableNumberOne.class, "id", 105));
+    }
+
+    @Test
+    @DisplayName("Plugin Test")
+    void testPlugins() {
+
     }
 }

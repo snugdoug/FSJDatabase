@@ -24,6 +24,7 @@ package com.snugdoug.fsjdatabase.util.field;
 
 import com.snugdoug.fsjdatabase.util.Logger;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
 /**
@@ -135,5 +136,21 @@ public class SemiField {
      */
     public static SemiField of(Class<?> type, String name, List<String> annotations) {
         return new SemiField(type, name, annotations);
+    }
+
+    /**
+     * Gets a reflection field value
+     * @param field the field
+     * @param clazz the class that contains the field
+     * @return the value
+     */
+    public static Object getFieldValue(Field field, Class<?> clazz) {
+        try {
+            field.setAccessible(true);
+
+            return field.get(clazz);
+        } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

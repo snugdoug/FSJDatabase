@@ -75,6 +75,7 @@ public class FileManager {
      */
     public static void mkdir(String path) {
         File file = new File(path);
+        Logger.debug("Attempting to create directory: " + path);
         if(file.mkdir()) {
             // possible future logic
         }
@@ -87,6 +88,8 @@ public class FileManager {
      */
     public static void mkdirs(String path) {
         File file = new File(path);
+        Logger.debug("Attempting to create directory(s): " + path);
+
         if(file.mkdirs()) {
             // possible future logic
         }

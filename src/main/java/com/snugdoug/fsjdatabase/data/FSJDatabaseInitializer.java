@@ -50,6 +50,9 @@ public class FSJDatabaseInitializer {
      */
     protected static List<SemiClass> freeTables = new ArrayList<>();
 
+    /// Auto increment
+    protected static List<SemiClass> autoIncrement =  new ArrayList<>();
+
     /**
      * This is called to initialize FSJDatabase using the {@code Class Scanning} method
      *
@@ -68,8 +71,7 @@ public class FSJDatabaseInitializer {
         List<SemiClass> results = scanForAnnotatedClassesAndPackages(mainClass);
 
         init = true;
-        DataManager.dataManagerInit(results);
-        JDataManager.jDataManagerInit(results);
+        autoIncrement = results;
     }
 
     /**
@@ -99,7 +101,8 @@ public class FSJDatabaseInitializer {
             }
             init = true;
             DataManager.dataManagerInit(results);
-            JDataManager.jDataManagerInit(results);
+            JDataManager jdm = new JDataManager();
+            autoIncrement = results;
         } else {
             Logger.error("If you are not using directory loading, please use the regular method (FSJDatabaseInitializer(Class<?> mainClass))");
             Runtime.getRuntime().exit(1);
@@ -306,6 +309,14 @@ public class FSJDatabaseInitializer {
      */
     public static List<SemiClass> getFreeTables() {
         return freeTables;
+    }
+
+    /**
+     * Get the auto increment tables
+     * @return {@link #autoIncrement}
+     */
+    public static List<SemiClass> getAutoIncrement() {
+        return autoIncrement;
     }
 
     /**

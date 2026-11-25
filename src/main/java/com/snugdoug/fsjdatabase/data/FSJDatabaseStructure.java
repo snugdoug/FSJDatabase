@@ -26,6 +26,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.snugdoug.fsjdatabase.data.annotation.TableMeta;
 import com.snugdoug.fsjdatabase.data.json.FSJJsonWriter;
+import com.snugdoug.fsjdatabase.plugin.PluginLoader;
 import com.snugdoug.fsjdatabase.util.Logger;
 import com.snugdoug.fsjdatabase.util.clazz.SemiClass;
 import com.snugdoug.fsjdatabase.util.field.SemiField;
@@ -140,8 +141,25 @@ public class FSJDatabaseStructure {
         FileManager.mkdir(dataDir);
         FileManager.mkdir(scriptDir);
         FileManager.mkdir(tablesDir);
+
+        PluginLoader.getClassStructExtHashMap().forEach((clazz, fields) -> {
+            fields.forEach((field) -> {
+                FileManager.mkdir(root + "/" + SemiField.getFieldValue(field, clazz));
+                Logger.debug("Creating structure extension with field: " + field);
+            });
+        });
+
+        PluginLoader.getClassStructFileExtHashMap().forEach((clazz, fields) -> {
+            fields.forEach((field) -> {
+                FileManager.createFile(root + "/" + SemiField.getFieldValue(field, clazz));
+                Logger.debug("Creating structure extension with field: " + field);
+            });
+        });
+
         FileManager.createFile(dataDir + "/autoIncrement.fsj");
         FileManager.createFile(dataDir + "/autoIncrement.json");
+
+
 
         doesStructureExist = true;
     }

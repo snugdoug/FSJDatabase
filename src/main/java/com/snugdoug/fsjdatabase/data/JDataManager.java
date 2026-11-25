@@ -68,32 +68,20 @@ import java.util.stream.Stream;
  *
  */
 @SuppressWarnings("rawtypes")
-public class JDataManager {
+public class JDataManager implements JDataManagerInter {
 
     /**
      * Create a new instance<br>
      * Before using anything in here, make sure FSJDatabase is initialized.
      */
     public JDataManager() {
-
+        this.autoIncrement = FSJDatabaseInitializer.autoIncrement;
     }
 
     /**
      * The autoIncrement tables
      */
-    private static List<SemiClass> autoIncrement;
-
-
-    /**
-     *<p>This method is called to tell {@link #addToTable(SemiClass, LinkedHashMap)} and other methods whether {@code FSJDatabase} is initialized.
-     *<p>This is needed because {@link FSJDatabaseInitializer} initializes the tables and most methods (planned or implemented)
-     *will need table access
-     *@param autoIncrement is changed by {@link FSJDatabaseInitializer} to tell whether the user wants auto increment or not.
-     *
-     */
-    protected static void jDataManagerInit(List<SemiClass> autoIncrement) {
-        JDataManager.autoIncrement = autoIncrement;
-    }
+    private final List<SemiClass> autoIncrement;
 
     /**
      * Adds data to a given table using {@link LinkedHashMap} to preserve insertion order.<br><br>
@@ -108,7 +96,7 @@ public class JDataManager {
      * @param table the table used to add the data
      * @return if it was successful or not
      */
-
+    @Override
     public boolean addToTable(SemiClass table, LinkedHashMap<Object, Object> dataToAdd) {
 
         // check for flags of invalid data/inproper initialization
@@ -159,6 +147,7 @@ public class JDataManager {
      * @param table the table used to add the data
      * @return if it was successful or not
      */
+    @Override
     public boolean addToTable(Class table, LinkedHashMap<Object, Object> dataToAdd) {
         Logger.debug("--- Attempting to write data ---");
         Logger.debug("Table: " + table.getSimpleName());
@@ -170,17 +159,18 @@ public class JDataManager {
 
     }
 
-        /**
-         * Deletes data from a {@code table} by id<br><br>
-         *
-         * Throws:<br>
-         * {@link TableNotFoundException}<br>
-         * {@link RecordNotFoundLogError}
-         *
-         * @param table the table to delete from
-         * @param id the id to search for
-         * @return if it was successful or not
-         */
+    /**
+     * Deletes data from a {@code table} by id<br><br>
+     *
+     * Throws:<br>
+     * {@link TableNotFoundException}<br>
+     * {@link RecordNotFoundLogError}
+     *
+     * @param table the table to delete from
+     * @param id the id to search for
+     * @return if it was successful or not
+     */
+    @Override
     public boolean deleteById(SemiClass table, int id) {
 
         if(!tableExists(table)) {
@@ -216,6 +206,7 @@ public class JDataManager {
      * @param id the id to search for
      * @return if it was successful or not
      */
+    @Override
     public boolean deleteById(Class table, int id) {
         return deleteById(new SemiClass(table), id);
     }
@@ -233,6 +224,7 @@ public class JDataManager {
      * @param toId where to end deleting data
      * @return if it was successful or not
      */
+    @Override
     public boolean deleteByFromIdToId(SemiClass table, int fromId, int toId) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -268,6 +260,7 @@ public class JDataManager {
      * @param toId where to end deleting data
      * @return if it was successful or not
      */
+    @Override
     public boolean deleteByFromIdToId(Class table, int fromId, int toId) {
         return deleteByFromIdToId(new SemiClass(table), fromId, toId);
     }
@@ -285,6 +278,7 @@ public class JDataManager {
      * @param value the value to check
      * @return if it was successful or not
      */
+    @Override
     public boolean deleteContaining(SemiClass table, Object key, Object value) {
         String tableName = table.getSimpleName();
 
@@ -341,6 +335,7 @@ public class JDataManager {
      * @param value the value to check
      * @return if it was successful or not
      */
+    @Override
     public boolean deleteContaining(Class table, Object key, Object value) {
         return deleteContaining(new SemiClass(table), key, value);
     }
@@ -355,6 +350,7 @@ public class JDataManager {
      * @param id the id to find the data
      * @return if it was successful or not
      */
+    @Override
     public boolean updateValueById(SemiClass table, int id, Object key, Object value) {
         if(tableExists(table)) {
             if(!FSJJsonWriter.tableContainsIdFile(id, table)) {
@@ -383,6 +379,7 @@ public class JDataManager {
      * @param id the id to find the data
      * @return if it was successful or not
      */
+    @Override
     public boolean updateValueById(Class table, int id, Object key, Object value) {
         return updateValueById(new SemiClass(table), id, key, value);
     }
@@ -396,6 +393,7 @@ public class JDataManager {
      * @param newValue the values to replace the previous value with
      * @return if it was successful or not
      */
+    @Override
     public boolean updateValueContaining(SemiClass table, Object key, Object value, Object newValue) {
         String tableName = table.getSimpleName();
         String targetDir =  FSJDatabaseStructure.tablesDir + "/" + tableName;
@@ -454,19 +452,21 @@ public class JDataManager {
      * @param newValue the values to replace the previous value with
      * @return if it was successful or not
      */
+    @Override
     public boolean updateValueContaining(Class table, Object key, Object value, Object newValue) {
         return updateValueContaining(new SemiClass(table), key, value, newValue);
     }
 
 
-        /**
-         * Updates a data file by id (id should be in data (2nd argument))
-         *
-         * @param table the table to search for the data file
-         * @param data data to add
-         * @throws RuntimeException throws from invalid data
-         * @return if it was successful or not
-         */
+    /**
+     * Updates a data file by id (id should be in data (2nd argument))
+     *
+     * @param table the table to search for the data file
+     * @param data data to add
+     * @throws RuntimeException throws from invalid data
+     * @return if it was successful or not
+     */
+    @Override
     public boolean updateById(SemiClass table, LinkedHashMap<Object, Object> data) throws RuntimeException {
 
         if(!FSJDatabaseInitializer.tables.contains(table) && !FSJDatabaseInitializer.freeTables.contains(table)) {
@@ -506,12 +506,12 @@ public class JDataManager {
             return false;
         }
 
-              if (!(FSJJsonWriter.tableContainsIdFile(id, table))) {
-                  Logger.error(new RecordNotFoundLogError(table, id));
-                  return false;
+        if (!(FSJJsonWriter.tableContainsIdFile(id, table))) {
+            Logger.error(new RecordNotFoundLogError(table, id));
+            return false;
         }
 
-              return FSJJsonWriter.write(data, table, id, false);
+        return FSJJsonWriter.write(data, table, id, false);
     }
 
     /**
@@ -522,6 +522,7 @@ public class JDataManager {
      * @throws RuntimeException throws from invalid data
      * @return if it was successful or not
      */
+    @Override
     public boolean updateById(Class table, LinkedHashMap<Object, Object> data) throws RuntimeException {
         return updateById(new SemiClass(table), data);
     }
@@ -534,7 +535,8 @@ public class JDataManager {
      * @param data the replacement data after the data matching searchData is found
      * @return if it was successful or not
      */
-    public boolean updateContaining(SemiClass table, LinkedHashMap<Object, Object> searchData,  LinkedHashMap<Object, Object> data) {
+    @Override
+    public boolean updateContaining(SemiClass table, LinkedHashMap<Object, Object> searchData, LinkedHashMap<Object, Object> data) {
 
         String targetDir = FSJDatabaseStructure.tablesDir + "/" + table.getSimpleName();
 
@@ -552,40 +554,40 @@ public class JDataManager {
 
         Logger.debug("Updating containing");
 
-            try(Stream<Path> paths = Files.walk(Path.of(targetDir))) {
-                paths
-                        .filter(Files::isRegularFile)
-                        .forEach(file -> {
-                            if (file.getFileName().toString().endsWith(".json")) {
-                                int id = Integer.parseInt(file.getFileName().toString().replace(".json", ""));
-                                LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
-                                Logger.debug("Attempted to find matching data in " + table + " with id " + id);
-                                Logger.debug("Data: " + map);
+        try(Stream<Path> paths = Files.walk(Path.of(targetDir))) {
+            paths
+                    .filter(Files::isRegularFile)
+                    .forEach(file -> {
+                        if (file.getFileName().toString().endsWith(".json")) {
+                            int id = Integer.parseInt(file.getFileName().toString().replace(".json", ""));
+                            LinkedHashMap<Object, Object> map = FSJJsonReader.read(id, table);
+                            Logger.debug("Attempted to find matching data in " + table + " with id " + id);
+                            Logger.debug("Data: " + map);
 
-                                HashMap<Object, Object> dataFound = new HashMap<>(map);
-                                HashMap<Object, Object> searchTerm = new HashMap<>(searchData);
+                            HashMap<Object, Object> dataFound = new HashMap<>(map);
+                            HashMap<Object, Object> searchTerm = new HashMap<>(searchData);
 
-                                dataFound.remove(getTableIdName(table));
-                                searchTerm.remove(getTableIdName(table));
+                            dataFound.remove(getTableIdName(table));
+                            searchTerm.remove(getTableIdName(table));
 
-                                if (dataFound.equals(searchTerm)) {
-                                    LinkedHashMap<Object, Object> newData = new LinkedHashMap<>(data);
-                                    newData.remove(getTableIdName(table));
-                                    newData.put(getTableIdName(table), id);
+                            if (dataFound.equals(searchTerm)) {
+                                LinkedHashMap<Object, Object> newData = new LinkedHashMap<>(data);
+                                newData.remove(getTableIdName(table));
+                                newData.put(getTableIdName(table), id);
 
-                                    Logger.debug("Found match, update data: " + newData + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
-                                    Logger.debug("Id: " + id);
-                                    Logger.debug("Table: " + table);
-                                    if (!FSJJsonWriter.write(newData, table, id, false))
-                                        writeFailed.set(true);
-                                }
+                                Logger.debug("Found match, update data: " + newData + "\n" + "search data: " + searchTerm + "\n" + "dataFound: " + dataFound);
+                                Logger.debug("Id: " + id);
+                                Logger.debug("Table: " + table);
+                                if (!FSJJsonWriter.write(newData, table, id, false))
+                                    writeFailed.set(true);
                             }
+                        }
 
-                        });
-            } catch (IOException e) {
-                Logger.error("Failed to walk through directory\n" + e);
-                return false;
-            }
+                    });
+        } catch (IOException e) {
+            Logger.error("Failed to walk through directory\n" + e);
+            return false;
+        }
         return !writeFailed.get();
     }
 
@@ -598,7 +600,8 @@ public class JDataManager {
      * @throws RuntimeException throws RuntimeException mostly from invalid data
      * @return if it was successful or not
      */
-    public boolean updateContaining(Class table, LinkedHashMap<Object, Object> searchData,  LinkedHashMap<Object, Object> data) throws RuntimeException {
+    @Override
+    public boolean updateContaining(Class table, LinkedHashMap<Object, Object> searchData, LinkedHashMap<Object, Object> data) throws RuntimeException {
         return updateContaining(new SemiClass(table), searchData, data);
     }
 
@@ -609,6 +612,7 @@ public class JDataManager {
      * @param id the id of the data file to find
      * @return returns a {@link LinkedHashMap} of the data files data
      */
+    @Override
     public LinkedHashMap<Object, Object> findById(SemiClass table, int id) {
         if(!FSJDatabaseInitializer.tables.contains(table) && !FSJDatabaseInitializer.freeTables.contains(table))
             throw new TableNotFoundException(table);
@@ -633,6 +637,7 @@ public class JDataManager {
      * @param toId where to stop finding data
      * @return a linked hash map that has the id as the key, then the another linked hash map for the actual data
      */
+    @Override
     public LinkedHashMap<Integer, LinkedHashMap<Object, Object>> findByFromIdToId(SemiClass table, int fromId, int toId) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -669,6 +674,7 @@ public class JDataManager {
      * @param toId where to stop finding data
      * @return a linked hash map that has the id as the key, then the another linked hash map for the actual data
      */
+    @Override
     public LinkedHashMap<Integer, LinkedHashMap<Object, Object>> findByFromIdToId(Class table, int fromId, int toId) {
         return findByFromIdToId(new SemiClass(table), fromId, toId);
     }
@@ -681,6 +687,7 @@ public class JDataManager {
      * @param id the id of the data file to find
      * @return returns a {@link LinkedHashMap} of the data files data
      */
+    @Override
     public LinkedHashMap<Object, Object> findById(Class table, int id) {
         return findById(new SemiClass(table), id);
     }
@@ -692,6 +699,7 @@ public class JDataManager {
      * @param value the value to look for
      * @return returns found matches
      */
+    @Override
     public List<LinkedHashMap<Object, Object>> findByValueContaining(SemiClass table, Object key, Object value) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -742,6 +750,7 @@ public class JDataManager {
      * @param value the value to look for
      * @return returns found matches
      */
+    @Override
     public List<LinkedHashMap<Object, Object>> findByValueContaining(Class table, Object key, Object value) {
         return findByValueContaining(new SemiClass(table), key, value);
     }
@@ -755,6 +764,7 @@ public class JDataManager {
      * The key value in the Map.Entry is the id.<br>
      * The value of Map.Entry is the value
      */
+    @Override
     public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(SemiClass table, Object key) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -793,6 +803,7 @@ public class JDataManager {
      * The key value in the Map.Entry is the id.<br>
      * The value of Map.Entry is the value
      */
+    @Override
     public LinkedList<Map.Entry<Object, Object>> findAllValuesOfKey(Class table, Object key) {
         return findAllValuesOfKey(new SemiClass(table), key);
     }
@@ -804,6 +815,7 @@ public class JDataManager {
      * @param autoIncrement when not using auto incrementing it will add the @id annotation name to match the given map data if it's not already invalid
      * @return returns a set of columns
      */
+    @Override
     public Set<String> getTableColumns(SemiClass table, boolean autoIncrement) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -817,13 +829,7 @@ public class JDataManager {
         return columns;
     }
 
-    /**
-     * This method handles writing things to the database, the reason this method exists is so the<br>
-     * {@link #addToTable(SemiClass, LinkedHashMap)} isn't longer than it should be.
-     *
-     * @param dataToAdd the data to add
-     * @param table the table to add the data to
-     * @param autoIncrement if the table uses auto incrementing*/
+
     private boolean writeToDatabase(LinkedHashMap<Object, Object> dataToAdd, SemiClass table, boolean autoIncrement) {
         if(autoIncrement) {
             int id = JAutoIncrement.get(table);
@@ -878,6 +884,7 @@ public class JDataManager {
      * @throws RuntimeException throws from invalid tables (table without id field)
      *
      */
+    @Override
     public String getTableIdName(SemiClass table) throws RuntimeException {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -904,6 +911,7 @@ public class JDataManager {
      * @param table The table
      * @return if the record exists
      */
+    @Override
     public boolean recordExists(int id, Class<?> table) {
         return recordExists(id, new SemiClass(table));
     }
@@ -914,6 +922,7 @@ public class JDataManager {
      * @param table The table
      * @return if the record exists
      */
+    @Override
     public boolean recordExists(int id, SemiClass table) {
         if(!tableExists(table)) {
             throw new TableNotFoundException(table);
@@ -925,6 +934,7 @@ public class JDataManager {
      * Gets the autoIncrement list
      * @return {@link #autoIncrement}
      */
+    @Override
     public List<SemiClass> getAutoIncrement() {
         return autoIncrement;
     }
@@ -934,6 +944,7 @@ public class JDataManager {
      * @param table the table
      * @return whether it exists or not
      */
+    @Override
     public boolean tableExists(SemiClass table) {
         return FSJDatabaseInitializer.tables.contains(table) | FSJDatabaseInitializer.freeTables.contains(table);
     }
@@ -964,6 +975,7 @@ public class JDataManager {
      * @return the result(s)
      */
     @SuppressWarnings("all")
+    @Override
     public List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> parse(Script scriptData) {
 
         List<LinkedHashMap<Integer, LinkedHashMap<Object, Object>>> result = new ArrayList<>();
